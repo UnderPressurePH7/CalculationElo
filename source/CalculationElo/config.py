@@ -141,6 +141,11 @@ class Config(object):
                         'value': g_configParams.showWinrateAndBattles.defaultMsaValue,
                         'varName': 'show-winrate-and-battles',
                         'tooltip': u'{HEADER}Показувати статистику{/HEADER}{BODY}Показувати відсоток перемог та кількість боїв суперника{/BODY}'
+                    },
+                    {
+                        'type': 'Label',
+                        'text': u'Інформація про файл конфігурації',
+                        'tooltip': u'{HEADER}Файл конфігурації{/HEADER}{BODY}Файл конфігурації знаходиться в папці [Папка із грою]\\mods\\configs\\under_pressure під назвою config.json. \nЯкщо ви хочете згенерувати конфігурацію за замовчуванням, то видаліть даний файл і перезапустіть гру. Також файл конфігурації можна редагувати вручну.{/BODY}',
                     }
                 ],
                 'column2': [
