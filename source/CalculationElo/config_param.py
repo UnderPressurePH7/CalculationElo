@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 import Keys
-from .config_param_types import BooleanParam, OptionsParam, ColorParam, Option, PARAM_REGISTRY, SliderParam
+from .config_param_types import BooleanParam, OptionsParam, ColorParam, ListParam, Option, PARAM_REGISTRY
 
 class DisplayMode(object):
     ALWAYS = 'always'
@@ -14,6 +15,10 @@ class HotKeyParam(object):
         PARAM_REGISTRY[self.tokenName] = self
 
     @property
+    def defaultMsaValue(self):
+        return self.value
+
+    @property
     def msaValue(self):
         return self.value
 
@@ -25,25 +30,6 @@ class HotKeyParam(object):
             self.value = []
         else:
             self.value = [value]
-
-class PositionParam(object):
-    def __init__(self, path, defaultValue=None):
-        self.path = path
-        self.tokenName = "-".join(path)
-        self.value = defaultValue if defaultValue is not None else [0, 0]
-        self.defaultValue = self.value
-        PARAM_REGISTRY[self.tokenName] = self
-
-    @property
-    def msaValue(self):
-        return self.value
-
-    @msaValue.setter
-    def msaValue(self, value):
-        if isinstance(value, list) and len(value) == 2:
-            self.value = value
-        else:
-            self.value = [0, 0]
 
 class ConfigParams(object):
     def __init__(self):
@@ -57,16 +43,11 @@ class ConfigParams(object):
             defaultValue=DisplayMode.ALWAYS
         )
         self.eloHotKey = HotKeyParam(['elo-hotkey'], defaultValue=[Keys.KEY_LALT])
-
-        self.panelPosition = PositionParam(['panel-position'], defaultValue=[565, 50])
         
-        self.showPlayerNames = BooleanParam(['show-player-names'], defaultValue=True)
-        self.showEloChanges = BooleanParam(['show-elo-changes'], defaultValue=True) 
-        self.showWinrateAndBattles = BooleanParam(['show-winrate-battles'], defaultValue=True)
+        # Панель налаштування (використовуємо список, а не ColorParam)
+        self.panelPosition = ListParam(['panel-position'], defaultValue=[565, 50])
         
-        self.panelBackgroundAlpha = SliderParam(['panel-background-alpha'], minValue=0.0, maxValue=1.0, defaultValue=0.8)
-        self.panelBackgroundColor = ColorParam(['panel-background-color'], defaultValue=[0, 0, 0])
-        
+        # Кольори
         self.headerColor = ColorParam(['header-color'], defaultValue=[255, 255, 255])
         self.alliesNamesColor = ColorParam(['allies-names-color'], defaultValue=[79, 134, 39])
         self.enemiesNamesColor = ColorParam(['enemies-names-color'], defaultValue=[154, 1, 1])
@@ -74,14 +55,21 @@ class ConfigParams(object):
         self.enemiesRatingColor = ColorParam(['enemies-rating-color'], defaultValue=[154, 1, 1])
         self.eloGainColor = ColorParam(['elo-gain-color'], defaultValue=[0, 255, 0])
         self.eloLossColor = ColorParam(['elo-loss-color'], defaultValue=[255, 0, 0])
-        self.winrateColor = ColorParam(['winrate-color'], defaultValue=[255, 255, 255])
+        self.winrateColor = ColorParam(['winrate-color'], defaultValue=[255, 255, 0])
         self.battlesColor = ColorParam(['battles-color'], defaultValue=[255, 255, 255])
         
+        # Налаштування видимості компонентів
+        self.showTitleVisible = BooleanParam(['show-title-visible'], defaultValue=True)
+        self.showTeamNames = BooleanParam(['show-team-names'], defaultValue=True)
+        self.showEloChanges = BooleanParam(['show-elo-changes'], defaultValue=True)
+        self.showWinrateAndBattles = BooleanParam(['show-winrate-and-battles'], defaultValue=True)
+        
+        # Налаштування тіні тексту
         self.textShadowEnabled = BooleanParam(['text-shadow-enabled'], defaultValue=True)
         self.textShadowColor = ColorParam(['text-shadow-color'], defaultValue=[0, 0, 0])
-        self.textShadowAlpha = SliderParam(['text-shadow-alpha'], minValue=0.0, maxValue=1.0, defaultValue=0.5)
-        self.textShadowDistance = SliderParam(['text-shadow-distance'], minValue=0, maxValue=10, defaultValue=1)
-        self.textShadowBlur = SliderParam(['text-shadow-blur'], minValue=0, maxValue=10, defaultValue=2)
+        self.textShadowDistance = ListParam(['text-shadow-distance'], defaultValue=[1])
+        self.textShadowAlpha = ListParam(['text-shadow-alpha'], defaultValue=[0.5])
+        self.textShadowBlur = ListParam(['text-shadow-blur'], defaultValue=[2])
 
     @staticmethod
     def items():

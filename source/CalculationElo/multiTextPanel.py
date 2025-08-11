@@ -17,7 +17,6 @@ class MultiTextPanel:
 
     def __init__(self):
         print_debug("[MultiTextPanel] Initializing...")
-        self.panel_id = 'eloInfoPanel'
         self.img_battle = '<img height="14px" width="14px" src="https://cdn-icons-png.flaticon.com/512/1643/1643160.png"/>'
         self.isKeyPressed = False
         self.active_keys = {}
@@ -35,13 +34,11 @@ class MultiTextPanel:
             self.hot_keys = [Keys.KEY_LALT] 
 
         try:
-            if not g_guiCache.isComponent(self.panel_id): 
+            if not g_guiCache.isComponent('eloInfoPanel'): 
                 print_debug("[MultiTextPanel] Creating main panel component...")
                 position = g_configParams.panelPosition.value
-                bg_color = g_configParams.panelBackgroundColor.value
-                bg_alpha = g_configParams.panelBackgroundAlpha.value
                 
-                g_guiFlash.createComponent(self.panel_id, COMPONENT_TYPE.PANEL, {
+                g_guiFlash.createComponent('eloInfoPanel', COMPONENT_TYPE.PANEL, {
                     'x': position[0],
                     'y': position[1],
                     'width': 150,
@@ -50,9 +47,7 @@ class MultiTextPanel:
                     'border': False,
                     'alignX': COMPONENT_ALIGN.LEFT,
                     'alignY': COMPONENT_ALIGN.TOP,
-                    'visible': True,
-                    'backgroundColor': (bg_color[0] << 16) | (bg_color[1] << 8) | bg_color[2],
-                    'backgroundAlpha': bg_alpha
+                    'visible': True
                 })
                 print_debug("[MultiTextPanel] Main panel created successfully")
             else:
@@ -82,23 +77,26 @@ class MultiTextPanel:
             
             current_y = 5
             
-            header_component_id = '{}.headerText'.format(self.panel_id)
-            header_color = g_configParams.headerColor.getHexColor()
-            header_text = '<font face="Tahoma" size="14" color="{0}"><b>-=Elo=-</b></font>'.format(header_color)
+            # Перевіряємо налаштування видимості заголовка
+            if g_configParams.showTitleVisible.value:
+                header_component_id = 'eloInfoPanel.headerText'
+                header_color = g_configParams.headerColor.getHexColor()
+                header_text = '<font face="Tahoma" size="14" color="{0}"><b>-=Elo=-</b></font>'.format(header_color)
+                
+                g_guiFlash.createComponent(header_component_id, COMPONENT_TYPE.LABEL, {
+                    'text': header_text,
+                    'x': 10,
+                    'y': current_y,
+                    'alignX': COMPONENT_ALIGN.CENTER,
+                    'isHtml': True,
+                    'visible': isVisible,
+                    'shadow': self._getShadowConfig()
+                })
+                current_y += 20
             
-            g_guiFlash.createComponent(header_component_id, COMPONENT_TYPE.LABEL, {
-                'text': header_text,
-                'x': 10,
-                'y': current_y,
-                'alignX': COMPONENT_ALIGN.CENTER,
-                'isHtml': True,
-                'visible': isVisible,
-                'shadow': self._getShadowConfig()
-            })
-            current_y += 20
-            
-            if g_configParams.showPlayerNames.value:
-                names_component_id = '{}.namesText'.format(self.panel_id)
+            # Заміна showPlayerNames на showTeamNames
+            if g_configParams.showTeamNames.value:
+                names_component_id = 'eloInfoPanel.namesText'
                 allies_name_color = g_configParams.alliesNamesColor.getHexColor()
                 enemies_name_color = g_configParams.enemiesNamesColor.getHexColor()
                 
@@ -120,7 +118,7 @@ class MultiTextPanel:
                 })
                 current_y += 20
             
-            ratings_component_id = '{}.ratingsText'.format(self.panel_id)
+            ratings_component_id = 'eloInfoPanel.ratingsText'
             allies_rating_color = g_configParams.alliesRatingColor.getHexColor()
             enemies_rating_color = g_configParams.enemiesRatingColor.getHexColor()
             
@@ -143,7 +141,7 @@ class MultiTextPanel:
             current_y += 21
             
             if g_configParams.showEloChanges.value:
-                elo_component_id = '{}.eloText'.format(self.panel_id)
+                elo_component_id = 'eloInfoPanel.eloText'
                 elo_gain_color = g_configParams.eloGainColor.getHexColor()
                 elo_loss_color = g_configParams.eloLossColor.getHexColor()
                 
@@ -166,7 +164,7 @@ class MultiTextPanel:
                 current_y += 17
             
             if g_configParams.showWinrateAndBattles.value:
-                stats_component_id = '{}.statsText'.format(self.panel_id)
+                stats_component_id = 'eloInfoPanel.statsText'
                 winrate_color = g_configParams.winrateColor.getHexColor()
                 battles_color = g_configParams.battlesColor.getHexColor()
                 
@@ -187,8 +185,11 @@ class MultiTextPanel:
                     'shadow': self._getShadowConfig()
                 })
             
-            visible_elements = 2 
-            if g_configParams.showPlayerNames.value:
+            # Розрахунок видимих елементів
+            visible_elements = 1  # Рейтинги завжди видимі
+            if g_configParams.showTitleVisible.value:
+                visible_elements += 1
+            if g_configParams.showTeamNames.value:
                 visible_elements += 1
             if g_configParams.showEloChanges.value:
                 visible_elements += 1
@@ -196,7 +197,7 @@ class MultiTextPanel:
                 visible_elements += 1
                 
             panel_height = 20 + (visible_elements * 25)
-            g_guiFlash.updateComponent(self.panel_id, {'height': panel_height})
+            g_guiFlash.updateComponent('eloInfoPanel', {'height': panel_height})
             
             print_debug("[MultiTextPanel] Text fields created successfully")
         except Exception as e:
@@ -206,18 +207,21 @@ class MultiTextPanel:
         try:
             print_debug("[MultiTextPanel] Updating text fields")
             
-            header_component_id = '{}.headerText'.format(self.panel_id)
-            header_color = g_configParams.headerColor.getHexColor()
-            header_text = '<font face="Tahoma" size="14" color="{0}"><b>-=Elo=-</b></font>'.format(header_color)
+            # Оновлення заголовка (якщо видимий)
+            if g_configParams.showTitleVisible.value:
+                header_component_id = 'eloInfoPanel.headerText'
+                header_color = g_configParams.headerColor.getHexColor()
+                header_text = '<font face="Tahoma" size="14" color="{0}"><b>-=Elo=-</b></font>'.format(header_color)
+                
+                if g_guiCache.isComponent(header_component_id):
+                    g_guiFlash.updateComponent(header_component_id, {
+                        'text': header_text,
+                        'shadow': self._getShadowConfig()
+                    })
             
-            if g_guiCache.isComponent(header_component_id):
-                g_guiFlash.updateComponent(header_component_id, {
-                    'text': header_text,
-                    'shadow': self._getShadowConfig()
-                })
-            
-            if g_configParams.showPlayerNames.value:
-                names_component_id = '{}.namesText'.format(self.panel_id)
+            # Заміна showPlayerNames на showTeamNames
+            if g_configParams.showTeamNames.value:
+                names_component_id = 'eloInfoPanel.namesText'
                 allies_name_color = g_configParams.alliesNamesColor.getHexColor()
                 enemies_name_color = g_configParams.enemiesNamesColor.getHexColor()
                 
@@ -234,7 +238,7 @@ class MultiTextPanel:
                         'shadow': self._getShadowConfig()
                     })
 
-            ratings_component_id = '{}.ratingsText'.format(self.panel_id)
+            ratings_component_id = 'eloInfoPanel.ratingsText'
             allies_rating_color = g_configParams.alliesRatingColor.getHexColor()
             enemies_rating_color = g_configParams.enemiesRatingColor.getHexColor()
             
@@ -252,7 +256,7 @@ class MultiTextPanel:
                 })
             
             if g_configParams.showEloChanges.value:
-                elo_component_id = '{}.eloText'.format(self.panel_id)
+                elo_component_id = 'eloInfoPanel.eloText'
                 elo_gain_color = g_configParams.eloGainColor.getHexColor()
                 elo_loss_color = g_configParams.eloLossColor.getHexColor()
                 
@@ -270,7 +274,7 @@ class MultiTextPanel:
                     })
             
             if g_configParams.showWinrateAndBattles.value:
-                stats_component_id = '{}.statsText'.format(self.panel_id)
+                stats_component_id = 'eloInfoPanel.statsText'
                 winrate_color = g_configParams.winrateColor.getHexColor()
                 battles_color = g_configParams.battlesColor.getHexColor()
                 
@@ -287,8 +291,11 @@ class MultiTextPanel:
                         'shadow': self._getShadowConfig()
                     })
             
-            visible_elements = 2  
-            if g_configParams.showPlayerNames.value:
+            # Розрахунок видимих елементів
+            visible_elements = 1  # Рейтинги завжди видимі
+            if g_configParams.showTitleVisible.value:
+                visible_elements += 1
+            if g_configParams.showTeamNames.value:
                 visible_elements += 1
             if g_configParams.showEloChanges.value:
                 visible_elements += 1
@@ -296,30 +303,44 @@ class MultiTextPanel:
                 visible_elements += 1
                 
             panel_height = 20 + (visible_elements * 25)
-            if g_guiCache.isComponent(self.panel_id):
-                g_guiFlash.updateComponent(self.panel_id, {'height': panel_height})
+            if g_guiCache.isComponent('eloInfoPanel'):
+                g_guiFlash.updateComponent('eloInfoPanel', {'height': panel_height})
             
             print_debug("[MultiTextPanel] Text fields updated successfully")
         except Exception as e:
             print_error("[MultiTextPanel] Error updating text fields: %s" % str(e))
 
     def _getShadowConfig(self):
-        if not g_configParams.textShadowEnabled.value:
-            return None
+        try:
+            if not g_configParams.textShadowEnabled.value:
+                return None
+                
+            shadow_color = g_configParams.textShadowColor.value
+            shadow_color_int = (shadow_color[0] << 16) | (shadow_color[1] << 8) | shadow_color[2]
             
-        shadow_color = g_configParams.textShadowColor.value
-        shadow_color_int = (shadow_color[0] << 16) | (shadow_color[1] << 8) | shadow_color[2]
-        
-        return {
-            'distance': g_configParams.textShadowDistance.value,
-            'angle': 45,
-            'color': shadow_color_int,
-            'alpha': g_configParams.textShadowAlpha.value,
-            'blurX': g_configParams.textShadowBlur.value,
-            'blurY': g_configParams.textShadowBlur.value,
-            'strength': 1,
-            'quality': 1
-        }
+            # Обробка параметрів тіні (можуть бути списками)
+            distance_val = g_configParams.textShadowDistance.value
+            distance = distance_val[0] if isinstance(distance_val, list) and len(distance_val) > 0 else distance_val
+            
+            alpha_val = g_configParams.textShadowAlpha.value
+            alpha = alpha_val[0] if isinstance(alpha_val, list) and len(alpha_val) > 0 else alpha_val
+            
+            blur_val = g_configParams.textShadowBlur.value
+            blur = blur_val[0] if isinstance(blur_val, list) and len(blur_val) > 0 else blur_val
+            
+            return {
+                'distance': distance,
+                'angle': 45,
+                'color': shadow_color_int,
+                'alpha': alpha,
+                'blurX': blur,
+                'blurY': blur,
+                'strength': 1,
+                'quality': 1
+            }
+        except Exception as e:
+            print_error("[MultiTextPanel] Error creating shadow config: %s" % str(e))
+            return None
 
     def start_key_held(self, isVisible):
         try:
@@ -378,17 +399,16 @@ class MultiTextPanel:
 
     def set_component_visibility(self, visible):
         try:
-            component_ids = [
-                '{}.headerText'.format(self.panel_id),
-                '{}.ratingsText'.format(self.panel_id)
-            ]
+            component_ids = ['eloInfoPanel.ratingsText']  # Рейтинги завжди в списку
             
-            if g_configParams.showPlayerNames.value:
-                component_ids.append('{}.namesText'.format(self.panel_id))
+            if g_configParams.showTitleVisible.value:
+                component_ids.append('eloInfoPanel.headerText')
+            if g_configParams.showTeamNames.value:
+                component_ids.append('eloInfoPanel.namesText')
             if g_configParams.showEloChanges.value:
-                component_ids.append('{}.eloText'.format(self.panel_id))
+                component_ids.append('eloInfoPanel.eloText')
             if g_configParams.showWinrateAndBattles.value:
-                component_ids.append('{}.statsText'.format(self.panel_id))
+                component_ids.append('eloInfoPanel.statsText')
             
             for component_id in component_ids:
                 if g_guiCache.isComponent(component_id):
@@ -401,12 +421,12 @@ class MultiTextPanel:
     def delete_all_component(self):
         try:
             component_ids = [
-                '{}.headerText'.format(self.panel_id),
-                '{}.namesText'.format(self.panel_id),
-                '{}.ratingsText'.format(self.panel_id),
-                '{}.eloText'.format(self.panel_id),
-                '{}.statsText'.format(self.panel_id),
-                self.panel_id
+                'eloInfoPanel.headerText',
+                'eloInfoPanel.namesText',
+                'eloInfoPanel.ratingsText',
+                'eloInfoPanel.eloText',
+                'eloInfoPanel.statsText',
+                'eloInfoPanel'
             ]
             
             for component_id in component_ids:
@@ -421,8 +441,8 @@ class MultiTextPanel:
     def update_panel_position(self, x, y):
         try:
             g_configParams.panelPosition.value = [x, y]
-            if g_guiCache.isComponent(self.panel_id):
-                g_guiFlash.updateComponent(self.panel_id, {'x': x, 'y': y})
+            if g_guiCache.isComponent('eloInfoPanel'):
+                g_guiFlash.updateComponent('eloInfoPanel', {'x': x, 'y': y})
                 print_debug("[MultiTextPanel] Panel position updated to: %s, %s" % (x, y))
         except Exception as e:
             print_error("[MultiTextPanel] Error updating panel position: %s" % str(e))
@@ -430,24 +450,14 @@ class MultiTextPanel:
     def refresh_colors_and_effects(self):
         try:
             print_debug("[MultiTextPanel] Refreshing colors and effects")
-
-            bg_color = g_configParams.panelBackgroundColor.value
-            bg_alpha = g_configParams.panelBackgroundAlpha.value
-            bg_color_int = (bg_color[0] << 16) | (bg_color[1] << 8) | bg_color[2]
-            
-            if g_guiCache.isComponent(self.panel_id):
-                g_guiFlash.updateComponent(self.panel_id, {
-                    'backgroundColor': bg_color_int,
-                    'backgroundAlpha': bg_alpha
-                })
             
             shadow_config = self._getShadowConfig()
             component_ids = [
-                '{}.headerText'.format(self.panel_id),
-                '{}.namesText'.format(self.panel_id),
-                '{}.ratingsText'.format(self.panel_id),
-                '{}.eloText'.format(self.panel_id),
-                '{}.statsText'.format(self.panel_id)
+                'eloInfoPanel.headerText',
+                'eloInfoPanel.namesText',
+                'eloInfoPanel.ratingsText',
+                'eloInfoPanel.eloText',
+                'eloInfoPanel.statsText'
             ]
             
             for component_id in component_ids:
@@ -463,11 +473,11 @@ class MultiTextPanel:
             print_debug("[MultiTextPanel] Recreating components due to visibility changes")
             
             component_ids = [
-                '{}.headerText'.format(self.panel_id),
-                '{}.namesText'.format(self.panel_id),
-                '{}.ratingsText'.format(self.panel_id),
-                '{}.eloText'.format(self.panel_id),
-                '{}.statsText'.format(self.panel_id)
+                'eloInfoPanel.headerText',
+                'eloInfoPanel.namesText',
+                'eloInfoPanel.ratingsText',
+                'eloInfoPanel.eloText',
+                'eloInfoPanel.statsText'
             ]
             
             for component_id in component_ids:
