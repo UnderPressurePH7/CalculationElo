@@ -44,7 +44,7 @@ class ConfigParams(object):
         )
         self.eloHotKey = HotKeyParam(['elo-hotkey'], defaultValue=[Keys.KEY_LALT])
 
-        self.panelPosition = ListParam(['panel-position'], defaultValue=[475, 50])
+        self.panelPosition = ListParam(['panel-position'], defaultValue=[405, 50])
         
         self.headerColor = ColorParam(['header-color'], defaultValue=[255, 255, 255])
         self.alliesNamesColor = ColorParam(['allies-names-color'], defaultValue=[79, 134, 39])
@@ -53,7 +53,7 @@ class ConfigParams(object):
         self.enemiesRatingColor = ColorParam(['enemies-rating-color'], defaultValue=[154, 1, 1])
         self.eloGainColor = ColorParam(['elo-gain-color'], defaultValue=[0, 255, 0])
         self.eloLossColor = ColorParam(['elo-loss-color'], defaultValue=[255, 0, 0])
-        self.winrateColor = ColorParam(['winrate-color'], defaultValue=[255, 255, 0])
+        self.winrateColor = ColorParam(['winrate-color'], defaultValue=[154, 1, 1])
         self.battlesColor = ColorParam(['battles-color'], defaultValue=[255, 255, 255])
 
         self.showTitleVisible = BooleanParam(['show-title-visible'], defaultValue=True)
