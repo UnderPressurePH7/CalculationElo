@@ -149,7 +149,7 @@ class MultiTextPanel:
                 elo_plus_str = "+{}".format(eloPlus) if eloPlus else "+0"
                 elo_minus_str = "-{}".format(abs(eloMinus)) if eloMinus else "-0"
                 
-                elo_text = '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font><font face="Tahoma" size="12" color="{2}"><b>          {3}</b></font>'.format(
+                elo_text = '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font><font face="Tahoma" size="14" color="{2}"><b>          {3}</b></font>'.format(
                     elo_gain_color, elo_plus_str, elo_loss_color, elo_minus_str
                 )
                 
@@ -172,7 +172,7 @@ class MultiTextPanel:
                 winrate_str = "{}%".format(wins_percent) if wins_percent else "0%"
                 battles_str = str(battles_count) if battles_count else "0"
                 
-                stats_text = '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font><font face="Tahoma" size="12" color="{2}"><b>({3})</b></font>'.format(
+                stats_text = '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font><font face="Tahoma" size="14" color="{2}"><b>({3})</b></font>'.format(
                      battles_color, battles_str, winrate_color, winrate_str
                 )
                 
@@ -258,7 +258,7 @@ class MultiTextPanel:
                 elo_plus_str = "+{}".format(eloPlus) if eloPlus else "+0"
                 elo_minus_str = "-{}".format(abs(eloMinus)) if eloMinus else "-0"
                 
-                elo_text = '<font face="Tahoma" size="12" color="{0}"><b>{1}</b></font><font face="Tahoma" size="12" color="{2}"><b>          {3}</b></font>'.format(
+                elo_text = '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font><font face="Tahoma" size="14" color="{2}"><b>          {3}</b></font>'.format(
                     elo_gain_color, elo_plus_str, elo_loss_color, elo_minus_str
                 )
                 
@@ -276,7 +276,7 @@ class MultiTextPanel:
                 winrate_str = "{}%".format(wins_percent) if wins_percent else "0%"
                 battles_str = str(battles_count) if battles_count else "0"
                 
-                stats_text = '<font face="Tahoma" size="12" color="{0}"><b>{1}</b></font><font face="Tahoma" size="12" color="{2}"><b> ({3})</b></font>'.format(
+                stats_text = '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font><font face="Tahoma" size="14" color="{2}"><b> ({3})</b></font>'.format(
                     battles_color, battles_str, winrate_color, winrate_str
                 )
                 
