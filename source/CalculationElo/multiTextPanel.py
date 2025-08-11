@@ -17,7 +17,6 @@ class MultiTextPanel:
 
     def __init__(self):
         print_debug("[MultiTextPanel] Initializing...")
-        self.img_battle = '<img height="14px" width="14px" src="https://cdn-icons-png.flaticon.com/512/1643/1643160.png"/>'
         self.isKeyPressed = False
         self.active_keys = {}
         
