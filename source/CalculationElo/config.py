@@ -109,9 +109,7 @@ class Config(object):
                         'value': g_configParams.eloHotKey.defaultMsaValue,
                         'varName': 'elo-hotkey',
                         'tooltip': u'{HEADER}Гаряча клавіша{/HEADER}{BODY}Клавіша для показу панелі у режимі "По натисканню"{/BODY}'
-                    }
-                ],
-                'column2': [
+                    },
                     {
                         'type': 'Label',
                         'text': u'Налаштування видимості'
@@ -145,7 +143,7 @@ class Config(object):
                         'tooltip': u'{HEADER}Показувати статистику{/HEADER}{BODY}Показувати відсоток перемог та кількість боїв суперника{/BODY}'
                     }
                 ],
-                'tabs': [
+                'column2': [
                     {
                         'tabId': 'colors',
                         'text': u'Кольори',
@@ -221,7 +219,6 @@ class Config(object):
                 ]
             }
 
-            # Використовуємо setModTemplate як у референсних модах
             g_modsSettingsApi.setModTemplate(modLinkage, template, self.on_settings_changed)
             print_debug("Mod template registered successfully using setModTemplate")
             
@@ -235,22 +232,17 @@ class Config(object):
         try:
             print_debug("MSA settings changed: %s" % str(newSettings))
             
-            # Оновлюємо параметри
             for tokenName, value in newSettings.items():
                 if tokenName in g_configParams.items():
                     param = g_configParams.items()[tokenName]
                     if hasattr(param, 'fromMsaValue'):
-                        # Конвертуємо MSA значення в внутрішнє представлення
                         param.value = param.fromMsaValue(value)
                     elif hasattr(param, 'msaValue'):
                         param.msaValue = value
                     else:
                         param.value = value
-            
-            # Зберігаємо конфігурацію
             self.save_config()
             
-            # Повідомляємо інші компоненти про зміни
             self._notify_config_changed()
             
             print_debug("Settings updated successfully")
@@ -260,7 +252,6 @@ class Config(object):
     def _notify_config_changed(self):
         """Повідомляє інші компоненти про зміни конфігурації"""
         try:
-            # Імпортуємо та повідомляємо ArenaInfoProvider
             from . import g_arenaInfoProvider
             if g_arenaInfoProvider and hasattr(g_arenaInfoProvider, 'on_config_changed'):
                 g_arenaInfoProvider.on_config_changed()
@@ -269,7 +260,7 @@ class Config(object):
             print_error("Error notifying config change: %s" % str(e))
 
     def sync_with_msa(self):
-        """Синхронізація з ModsSettingsApi - заглушка для сумісності"""
+        """Синхронізація з ModsSettingsApi"""
         try:
             print_debug("MSA sync called - using config file values")
         except Exception as e:
