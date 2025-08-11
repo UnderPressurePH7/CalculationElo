@@ -144,10 +144,6 @@ class Config(object):
                     }
                 ],
                 'column2': [
-                    {
-                        'tabId': 'colors',
-                        'text': u'Кольори',
-                        'template': [
                             {
                                 'type': 'Label',
                                 'text': u'Налаштування кольорів'
@@ -216,8 +212,6 @@ class Config(object):
                             }
                         ]
                     }
-                ]
-            }
 
             g_modsSettingsApi.setModTemplate(modLinkage, template, self.on_settings_changed)
             print_debug("Mod template registered successfully using setModTemplate")
