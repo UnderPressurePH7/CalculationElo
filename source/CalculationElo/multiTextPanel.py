@@ -43,7 +43,7 @@ class MultiTextPanel:
                 g_guiFlash.createComponent(self.panel_id, COMPONENT_TYPE.PANEL, {
                     'x': position[0],
                     'y': position[1],
-                    'width': 250,
+                    'width': 200,
                     'height': 120,
                     'drag': True,
                     'border': False,
@@ -88,7 +88,7 @@ class MultiTextPanel:
             
             g_guiFlash.createComponent(header_component_id, COMPONENT_TYPE.LABEL, {
                 'text': header_text,
-                'x': 125,
+                'x': 5,
                 'y': current_y,
                 'alignX': COMPONENT_ALIGN.CENTER,
                 'isHtml': True,
