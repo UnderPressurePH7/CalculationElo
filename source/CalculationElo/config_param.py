@@ -1,160 +1,95 @@
 import Keys
-from .config_param_types import *
-from .utils import print_log, print_error, print_debug
-
-# Реєстр параметрів для зворотної сумісності
-PARAM_REGISTRY = {}
+from .config_param_types import BooleanParam, OptionsParam, ColorParam, Option, PARAM_REGISTRY, SliderParam
 
 class DisplayMode(object):
     ALWAYS = 'always'
     ON_HOTKEY_PRESSED = 'on-hotkey-pressed'
 
 class HotKeyParam(object):
-    """Спеціальний клас для параметрів гарячих клавіш"""
     def __init__(self, path, defaultValue=None):
         self.path = path
         self.tokenName = "-".join(path)
-        self.value = defaultValue if defaultValue is not None else [Keys.KEY_LALT]
+        self.value = defaultValue if defaultValue is not None else []
         self.defaultValue = self.value
-        self.msaValue = None
         PARAM_REGISTRY[self.tokenName] = self
 
-    def toMsaValue(self, value):
-        return value if isinstance(value, list) else [value] if value is not None else []
+    @property
+    def msaValue(self):
+        return self.value
 
-    def fromMsaValue(self, msaValue):
-        if isinstance(msaValue, list):
-            return msaValue
-        elif msaValue is None:
-            return self.defaultValue
+    @msaValue.setter
+    def msaValue(self, value):
+        if isinstance(value, list):
+            self.value = value
+        elif value is None:
+            self.value = []
         else:
-            return [msaValue]
+            self.value = [value]
 
-    def validate(self, value):
-        return isinstance(value, list)
+class PositionParam(object):
+    def __init__(self, path, defaultValue=None):
+        self.path = path
+        self.tokenName = "-".join(path)
+        self.value = defaultValue if defaultValue is not None else [0, 0]
+        self.defaultValue = self.value
+        PARAM_REGISTRY[self.tokenName] = self
 
-    def toJsonValue(self, value):
-        return value
+    @property
+    def msaValue(self):
+        return self.value
 
-    def fromJsonValue(self, jsonValue):
-        return jsonValue if jsonValue is not None else self.defaultValue
+    @msaValue.setter
+    def msaValue(self, value):
+        if isinstance(value, list) and len(value) == 2:
+            self.value = value
+        else:
+            self.value = [0, 0]
 
 class ConfigParams(object):
     def __init__(self):
-        # Основні налаштування
-        self.enabled = BooleanParam(
-            ["enabled"],
-            defaultValue=True
-        )
-        
-        # Режим відображення
+        self.enabled = BooleanParam(['enabled'], defaultValue=True)
         self.displayMode = OptionsParam(
-            ["display-mode"],
+            ['display-mode'],
             [
-                Option(DisplayMode.ALWAYS, 0, "Завжди"),
-                Option(DisplayMode.ON_HOTKEY_PRESSED, 1, "При натисканні клавіші")
+                Option(DisplayMode.ALWAYS, 0, "Always"),
+                Option(DisplayMode.ON_HOTKEY_PRESSED, 1, "On HotKey Pressed")
             ],
-            defaultValue=DisplayMode.ON_HOTKEY_PRESSED
+            defaultValue=DisplayMode.ALWAYS
         )
+        self.eloHotKey = HotKeyParam(['elo-hotkey'], defaultValue=[Keys.KEY_LALT])
         
-        # Гарячі клавіші
-        self.eloHotKey = HotKeyParam(
-            ["elo-hotkey"], 
-            defaultValue=[Keys.KEY_LALT]
-        )
+        # Початкова позиція панелі
+        self.panelPosition = PositionParam(['panel-position'], defaultValue=[565, 50])
         
-        # Налаштування видимості
-        self.eloVisible = BooleanParam(
-            ["elo-visible"],
-            defaultValue=True
-        )
+        # Видимість окремих полів
+        self.showPlayerNames = BooleanParam(['show-player-names'], defaultValue=True)
+        self.showEloChanges = BooleanParam(['show-elo-changes'], defaultValue=True) 
+        self.showWinrateAndBattles = BooleanParam(['show-winrate-battles'], defaultValue=True)
         
-        self.enemiesFor28DaysVisible = BooleanParam(
-            ["enemies-for-28-days-visible"],
-            defaultValue=True
-        )
+        # Прозорість фону панелі
+        self.panelBackgroundAlpha = SliderParam(['panel-background-alpha'], minValue=0.0, maxValue=1.0, defaultValue=0.8)
+        self.panelBackgroundColor = ColorParam(['panel-background-color'], defaultValue=[0, 0, 0])
         
-        # Кольори
-        self.alliesColor = ColorParam(
-            ["allies-color"],
-            defaultValue=[79, 134, 39]  # Зелений
-        )
+        # Кольори для різних елементів
+        self.headerColor = ColorParam(['header-color'], defaultValue=[255, 255, 255])
+        self.alliesNamesColor = ColorParam(['allies-names-color'], defaultValue=[79, 134, 39])
+        self.enemiesNamesColor = ColorParam(['enemies-names-color'], defaultValue=[154, 1, 1])
+        self.alliesRatingColor = ColorParam(['allies-rating-color'], defaultValue=[79, 134, 39])
+        self.enemiesRatingColor = ColorParam(['enemies-rating-color'], defaultValue=[154, 1, 1])
+        self.eloGainColor = ColorParam(['elo-gain-color'], defaultValue=[0, 255, 0])
+        self.eloLossColor = ColorParam(['elo-loss-color'], defaultValue=[255, 0, 0])
+        self.winrateColor = ColorParam(['winrate-color'], defaultValue=[255, 255, 255])
+        self.battlesColor = ColorParam(['battles-color'], defaultValue=[255, 255, 255])
         
-        self.enemiesColor = ColorParam(
-            ["enemies-color"], 
-            defaultValue=[154, 1, 1]  # Червоний
-        )
-        
-        self.additionalColor = ColorParam(
-            ["additional-color"],
-            defaultValue=[255, 255, 255]  # Білий
-        )
-        
-        # Позиція панелі (тільки позиція, розмір фіксований)
-        self.panelX = IntParam(
-            ["panel", "position", "x"],
-            defaultValue=565,
-            minValue=0,
-            maxValue=1920
-        )
-        
-        self.panelY = IntParam(
-            ["panel", "position", "y"],
-            defaultValue=50,
-            minValue=0,
-            maxValue=1080
-        )
-        
-        # Налаштування прозорості
-        self.panelAlpha = FloatParam(
-            ["panel", "alpha"],
-            defaultValue=0.7,
-            minValue=0.0,
-            maxValue=1.0
-        )
-        
-        # Показувати рамку
-        self.showBorder = BooleanParam(
-            ["panel", "show-border"],
-            defaultValue=True
-        )
-
-        # Реєстрація всіх параметрів у глобальному реєстрі
-        self._register_all_params()
-
-    def _register_all_params(self):
-        """Реєстрація всіх параметрів у глобальному реєстрі"""
-        params_to_register = [
-            'enabled', 'displayMode', 'eloHotKey', 'eloVisible', 'enemiesFor28DaysVisible',
-            'alliesColor', 'enemiesColor', 'additionalColor',
-            'panelX', 'panelY', 'panelAlpha', 'showBorder'
-        ]
-        
-        for param_name in params_to_register:
-            param = getattr(self, param_name)
-            if hasattr(param, 'tokenName'):
-                PARAM_REGISTRY[param.tokenName] = param
-
-    def items(self):
-        """Повернення словника всіх параметрів для сумісності"""
-        return {
-            'enabled': self.enabled,
-            'displayMode': self.displayMode,
-            'eloHotKey': self.eloHotKey,
-            'eloVisible': self.eloVisible,
-            'enemiesFor28DaysVisible': self.enemiesFor28DaysVisible,
-            'alliesColor': self.alliesColor,
-            'enemiesColor': self.enemiesColor,
-            'additionalColor': self.additionalColor,
-            'panelX': self.panelX,
-            'panelY': self.panelY,
-            'panelAlpha': self.panelAlpha,
-            'showBorder': self.showBorder
-        }
+        # Тінь для тексту
+        self.textShadowEnabled = BooleanParam(['text-shadow-enabled'], defaultValue=True)
+        self.textShadowColor = ColorParam(['text-shadow-color'], defaultValue=[0, 0, 0])
+        self.textShadowAlpha = SliderParam(['text-shadow-alpha'], minValue=0.0, maxValue=1.0, defaultValue=0.5)
+        self.textShadowDistance = SliderParam(['text-shadow-distance'], minValue=0, maxValue=10, defaultValue=1)
+        self.textShadowBlur = SliderParam(['text-shadow-blur'], minValue=0, maxValue=10, defaultValue=2)
 
     @staticmethod
-    def getRegistry():
-        """Статичний метод для отримання реєстру параметрів"""
+    def items():
         return PARAM_REGISTRY
 
 g_configParams = ConfigParams()

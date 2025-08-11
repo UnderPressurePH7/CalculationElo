@@ -1,299 +1,247 @@
+# -*- coding: utf-8 -*-
 import json
-import os
 from gui.modsSettingsApi import g_modsSettingsApi
-from .utils import print_log, print_error, print_debug
 from .config_param import g_configParams
+from .utils import print_debug, print_error, print_log
 
-modLinkage = 'me.under-pressure.calculationelo'
+modLinkage = "com.under_pressure.calculationelo"
 
-class Config(object):
+def _color_to_hex(color_list):
+    try:
+        r, g, b = color_list
+        return "#{:02x}{:02x}{:02x}".format(r, g, b)
+    except:
+        return "#ffffff"
+
+def _color_from_hex(hex_color):
+    try:
+        hex_color = hex_color.lstrip('#')
+        return [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
+    except:
+        return [255, 255, 255]
+
+class Config:
     def __init__(self):
-        self.config_path = os.path.join('mods', 'configs', 'under_pressure', 'config.json')
-        self._ensure_config_exists()
+        self.config_path = './mods/configs/under_pressure/config.json'
+        self.settings = None
         self.load_config()
-        self._register_mod()
+        self.register_mod_settings()
 
-    def _ensure_config_exists(self):
+    def register_mod_settings(self):
         try:
-            config_dir = os.path.dirname(self.config_path)
-            if not os.path.exists(config_dir):
-                os.makedirs(config_dir)
-                print_debug("Created config directory")
-
-            if not os.path.exists(self.config_path):
-                self._create_default_config()
-        except Exception as e:
-            print_error("Error ensuring config exists: %s" % str(e))
-
-    def _create_default_config(self):
-        try:
-            config_data = {}
-            for tokenName, param in g_configParams.items().items():
-                config_data[tokenName] = param.defaultValue
-
-            with open(self.config_path, 'w') as f:
-                json.dump(config_data, f, indent=4)
-            print_debug("Created default config file")
-        except Exception as e:
-            print_error("Error creating default config: %s" % str(e))
-
-    def _get_safe_msa_value(self, param):
-        try:
-            if hasattr(param, 'msaValue') and param.msaValue is not None:
-                return param.msaValue
-            else:
-                return param.toMsaValue(param.value)
-        except Exception as e:
-            print_error("Error getting msaValue for %s: %s" % (param.tokenName, str(e)))
-            return param.toMsaValue(param.defaultValue)
-
-    def _register_mod(self):
-        try:
-            # Отримання значень параметрів
-            enabled_value = bool(g_configParams.enabled.value)
-            display_mode_value = self._get_safe_msa_value(g_configParams.displayMode)
-            hotkey_value = self._get_safe_msa_value(g_configParams.eloHotKey)
-            allies_color_value = self._get_safe_msa_value(g_configParams.alliesColor)
-            enemies_color_value = self._get_safe_msa_value(g_configParams.enemiesColor)
-            additional_color_value = self._get_safe_msa_value(g_configParams.additionalColor)
-            elo_visible_value = self._get_safe_msa_value(g_configParams.eloVisible)
-            enemies_for_28_days_visible_value = self._get_safe_msa_value(g_configParams.enemiesFor28DaysVisible)
+            enabled_value = g_configParams.enabled.value
+            display_mode_value = next((i for i, opt in enumerate(g_configParams.displayMode.options) if opt.value == g_configParams.displayMode.value), 0)
+            hotkey_value = g_configParams.eloHotKey.value
             
-            # Позиція та розмір
-            panel_x_value = self._get_safe_msa_value(g_configParams.panelX)
-            panel_y_value = self._get_safe_msa_value(g_configParams.panelY)
-            panel_width_value = self._get_safe_msa_value(g_configParams.panelWidth)
-            panel_height_value = self._get_safe_msa_value(g_configParams.panelHeight)
-            panel_alpha_value = self._get_safe_msa_value(g_configParams.panelAlpha)
-            font_size_value = self._get_safe_msa_value(g_configParams.fontSize)
-            show_border_value = self._get_safe_msa_value(g_configParams.showBorder)
+            # Конвертація кольорів у hex для ModsSettingsAPI
+            panel_bg_color_value = _color_to_hex(g_configParams.panelBackgroundColor.value)
+            header_color_value = _color_to_hex(g_configParams.headerColor.value)
+            allies_names_color_value = _color_to_hex(g_configParams.alliesNamesColor.value)
+            enemies_names_color_value = _color_to_hex(g_configParams.enemiesNamesColor.value)
+            allies_rating_color_value = _color_to_hex(g_configParams.alliesRatingColor.value)
+            enemies_rating_color_value = _color_to_hex(g_configParams.enemiesRatingColor.value)
+            elo_gain_color_value = _color_to_hex(g_configParams.eloGainColor.value)
+            elo_loss_color_value = _color_to_hex(g_configParams.eloLossColor.value)
+            winrate_color_value = _color_to_hex(g_configParams.winrateColor.value)
+            battles_color_value = _color_to_hex(g_configParams.battlesColor.value)
+            text_shadow_color_value = _color_to_hex(g_configParams.textShadowColor.value)
 
             template = {
-                'modDisplayName': 'Калькулятор Ело',
+                'modDisplayName': 'Calculation Elo',
                 'enabled': enabled_value,
-                'settingsCache': True,
-                'settings': [
-                    # Заголовок - Основні налаштування
-                    {
-                        'type': 'Label',
-                        'text': 'Основні налаштування',
-                        'pos': {'x': 50, 'y': 50},
-                        'size': {'width': 300, 'height': 30},
-                        'color': '0xFFFF00'
+                'column1': [
+                    {'type': 'Label',
+                     'text': '\u041e\u0441\u043d\u043e\u0432\u043d\u0456 \u043f\u0430\u0440\u0430\u043c\u0435\u0442\u0440\u0438'
                     },
-                    
-                    # Увімкнення/вимкнення мода
                     {
                         'type': 'CheckBox',
-                        'varName': 'enabled',
+                        'text': '\u0423\u0432\u0456\u043c\u043a\u043d\u0443\u0442\u0438 \u043c\u043e\u0434',
                         'value': enabled_value,
-                        'text': 'Увімкнути мод',
-                        'tooltip': 'Увімкнути/вимкнути мод',
-                        'pos': {'x': 70, 'y': 90},
-                        'size': {'width': 200, 'height': 30}
+                        'varName': 'enabled',
+                        'tooltip': '{HEADER}\u0423\u0432\u0456\u043c\u043a\u043d\u0443\u0442\u0438 \u043c\u043e\u0434{/HEADER}{BODY}\u0423\u0432\u0456\u043c\u043a\u043d\u0443\u0442\u0438 \u0430\u0431\u043e \u0432\u0438\u043c\u043a\u043d\u0443\u0442\u0438 \u0432\u0435\u0441\u044c \u043c\u043e\u0434.{/BODY}'
                     },
-                    
-                    # Режим відображення
                     {
-                        'type': 'DropDown',
-                        'varName': 'displayMode',
+                        'type': 'Dropdown',
+                        'text': '\u0420\u0435\u0436\u0438\u043c \u0432\u0456\u0434\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u043d\u044f',
                         'value': display_mode_value,
-                        'text': 'Режим відображення',
-                        'tooltip': 'Коли показувати панель ELO',
-                        'pos': {'x': 70, 'y': 130},
-                        'size': {'width': 250, 'height': 30},
                         'options': [
-                            {'text': 'Завжди', 'value': 0},
-                            {'text': 'При натисканні клавіші', 'value': 1}
-                        ]
+                            {'label': opt.displayName}
+                            for opt in g_configParams.displayMode.options
+                        ],
+                        'varName': 'display-mode',
+                        'tooltip': '{HEADER}\u0420\u0435\u0436\u0438\u043c \u0432\u0456\u0434\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u043d\u044f{/HEADER}{BODY}Always - \u0417\u0430\u0432\u0436\u0434\u0438 \u043f\u043e\u043a\u0430\u0437\u0443\u0432\u0430\u0442\u0438, On HotKey Pressed - \u041f\u0440\u0438 \u0437\u0430\u0442\u0438\u0441\u043a\u0430\u043d\u043d\u0456 \u043a\u043b\u0430\u0432\u0456\u0448\u0456.{/BODY}'
                     },
-                    
-                    # Заголовок - Видимість елементів
                     {
-                        'type': 'Label',
-                        'text': 'Видимість елементів',
-                        'pos': {'x': 50, 'y': 190},
-                        'size': {'width': 300, 'height': 30},
-                        'color': '0xFFFF00'
+                        'type': 'HotKey',
+                        'text': '\u041a\u043b\u0430\u0432\u0456\u0448\u0430 \u0434\u043b\u044f \u043f\u043e\u043a\u0430\u0437\u0443 \u043f\u0430\u043d\u0435\u043b\u0456',
+                        'value': hotkey_value,
+                        'varName': 'elo-hotkey',
+                        'tooltip': '{HEADER}\u041a\u043b\u0430\u0432\u0456\u0448\u0430{/HEADER}{BODY}\u0412\u0438\u0431\u0435\u0440\u0456\u0442\u044c \u0431\u0443\u0434\u044c-\u044f\u043a\u0443 \u043a\u043b\u0430\u0432\u0456\u0448\u0443 \u0434\u043b\u044f \u043f\u043e\u043a\u0430\u0437\u0443 \u043f\u0430\u043d\u0435\u043b\u0456.{/BODY}'
                     },
-                    
-                    # Показувати ELO
+                    {'type': 'Label',
+                     'text': '\u0412\u0438\u0434\u0438\u043c\u0456\u0441\u0442\u044c \u0435\u043b\u0435\u043c\u0435\u043d\u0442\u0456\u0432'
+                    },
                     {
                         'type': 'CheckBox',
-                        'varName': 'eloVisible',
-                        'value': elo_visible_value,
-                        'text': 'Показувати зміни ELO',
-                        'tooltip': 'Відображати зміни рейтингу ELO',
-                        'pos': {'x': 70, 'y': 230},
-                        'size': {'width': 250, 'height': 30}
+                        'text': '\u041f\u043e\u043a\u0430\u0437\u0443\u0432\u0430\u0442\u0438 \u0456\u043c\u0435\u043d\u0430 \u0433\u0440\u0430\u0432\u0446\u0456\u0432',
+                        'value': g_configParams.showPlayerNames.value,
+                        'varName': 'show-player-names',
+                        'tooltip': '{HEADER}\u0406\u043c\u0435\u043d\u0430 \u0433\u0440\u0430\u0432\u0446\u0456\u0432{/HEADER}{BODY}\u0412\u0456\u0434\u043e\u0431\u0440\u0430\u0436\u0430\u0442\u0438 \u0456\u043c\u0435\u043d\u0430 \u0441\u043e\u044e\u0437\u043d\u0438\u043a\u0456\u0432 \u0456 \u0432\u043e\u0440\u043e\u0433\u0456\u0432.{/BODY}'
                     },
-                    
-                    # Показувати статистику за 28 днів
                     {
                         'type': 'CheckBox',
-                        'varName': 'enemiesFor28DaysVisible',
-                        'value': enemies_for_28_days_visible_value,
-                        'text': 'Показувати статистику за 28 днів',
-                        'tooltip': 'Відображати статистику ворогів за останні 28 днів',
-                        'pos': {'x': 70, 'y': 270},
-                        'size': {'width': 280, 'height': 30}
+                        'text': '\u041f\u043e\u043a\u0430\u0437\u0443\u0432\u0430\u0442\u0438 \u0437\u043c\u0456\u043d\u0438 Elo',
+                        'value': g_configParams.showEloChanges.value,
+                        'varName': 'show-elo-changes',
+                        'tooltip': '{HEADER}\u0417\u043c\u0456\u043d\u0438 Elo{/HEADER}{BODY}\u0412\u0456\u0434\u043e\u0431\u0440\u0430\u0436\u0430\u0442\u0438 +/- Elo \u0437\u0430 \u043f\u0435\u0440\u0435\u043c\u043e\u0433\u0443/\u043f\u043e\u0440\u0430\u0437\u043a\u0443.{/BODY}'
                     },
-                    
-                    # Заголовок - Кольори
-                    {
-                        'type': 'Label',
-                        'text': 'Налаштування кольорів',
-                        'pos': {'x': 50, 'y': 330},
-                        'size': {'width': 300, 'height': 30},
-                        'color': '0xFFFF00'
-                    },
-                    
-                    # Колір союзників
-                    {
-                        'type': 'ColorPicker',
-                        'varName': 'alliesColor',
-                        'value': allies_color_value,
-                        'text': 'Колір союзників',
-                        'tooltip': 'Колір тексту для союзників',
-                        'pos': {'x': 70, 'y': 370},
-                        'size': {'width': 200, 'height': 30}
-                    },
-                    
-                    # Колір ворогів
-                    {
-                        'type': 'ColorPicker',
-                        'varName': 'enemiesColor',
-                        'value': enemies_color_value,
-                        'text': 'Колір ворогів',
-                        'tooltip': 'Колір тексту для ворогів',
-                        'pos': {'x': 70, 'y': 410},
-                        'size': {'width': 200, 'height': 30}
-                    },
-                    
-                    # Додатковий колір
-                    {
-                        'type': 'ColorPicker',
-                        'varName': 'additionalColor',
-                        'value': additional_color_value,
-                        'text': 'Колір додаткової інформації',
-                        'tooltip': 'Колір для ELO та статистики',
-                        'pos': {'x': 70, 'y': 450},
-                        'size': {'width': 250, 'height': 30}
-                    },
-                    
-                    # Заголовок - Позиція та розмір
-                    {
-                        'type': 'Label',
-                        'text': 'Позиція та розмір панелі',
-                        'pos': {'x': 400, 'y': 50},
-                        'size': {'width': 300, 'height': 30},
-                        'color': '0xFFFF00'
-                    },
-                    
-                    # Позиція X
-                    {
-                        'type': 'Slider',
-                        'varName': 'panelX',
-                        'value': panel_x_value,
-                        'text': 'Позиція X',
-                        'tooltip': 'Горизонтальна позиція панелі',
-                        'pos': {'x': 420, 'y': 90},
-                        'size': {'width': 250, 'height': 30},
-                        'range': {'min': 0, 'max': 1920, 'step': 10}
-                    },
-                    
-                    # Позиція Y
-                    {
-                        'type': 'Slider',
-                        'varName': 'panelY',
-                        'value': panel_y_value,
-                        'text': 'Позиція Y',
-                        'tooltip': 'Вертикальна позиція панелі',
-                        'pos': {'x': 420, 'y': 130},
-                        'size': {'width': 250, 'height': 30},
-                        'range': {'min': 0, 'max': 1080, 'step': 10}
-                    },
-                    
-                    # Ширина панелі
-                    {
-                        'type': 'Slider',
-                        'varName': 'panelWidth',
-                        'value': panel_width_value,
-                        'text': 'Ширина панелі',
-                        'tooltip': 'Ширина панелі ELO',
-                        'pos': {'x': 420, 'y': 170},
-                        'size': {'width': 250, 'height': 30},
-                        'range': {'min': 100, 'max': 500, 'step': 10}
-                    },
-                    
-                    # Висота панелі
-                    {
-                        'type': 'Slider',
-                        'varName': 'panelHeight',
-                        'value': panel_height_value,
-                        'text': 'Висота панелі',
-                        'tooltip': 'Висота панелі ELO',
-                        'pos': {'x': 420, 'y': 210},
-                        'size': {'width': 250, 'height': 30},
-                        'range': {'min': 80, 'max': 300, 'step': 10}
-                    },
-                    
-                    # Прозорість панелі
-                    {
-                        'type': 'Slider',
-                        'varName': 'panelAlpha',
-                        'value': panel_alpha_value,
-                        'text': 'Прозорість фону',
-                        'tooltip': 'Прозорість фону панелі (0.0 - прозорий, 1.0 - непрозорий)',
-                        'pos': {'x': 420, 'y': 250},
-                        'size': {'width': 250, 'height': 30},
-                        'range': {'min': 0.0, 'max': 1.0, 'step': 0.1}
-                    },
-                    
-                    # Розмір шрифту
-                    {
-                        'type': 'Slider',
-                        'varName': 'fontSize',
-                        'value': font_size_value,
-                        'text': 'Розмір шрифту',
-                        'tooltip': 'Розмір шрифту тексту',
-                        'pos': {'x': 420, 'y': 290},
-                        'size': {'width': 250, 'height': 30},
-                        'range': {'min': 8, 'max': 24, 'step': 1}
-                    },
-                    
-                    # Показувати рамку
                     {
                         'type': 'CheckBox',
-                        'varName': 'showBorder',
-                        'value': show_border_value,
-                        'text': 'Показувати рамку',
-                        'tooltip': 'Відображати рамку навколо панелі',
-                        'pos': {'x': 420, 'y': 330},
-                        'size': {'width': 200, 'height': 30}
+                        'text': '\u041f\u043e\u043a\u0430\u0437\u0443\u0432\u0430\u0442\u0438 \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0443',
+                        'value': g_configParams.showWinrateAndBattles.value,
+                        'varName': 'show-winrate-battles',
+                        'tooltip': '{HEADER}\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430{/HEADER}{BODY}\u0412\u0456\u0434\u043e\u0431\u0440\u0430\u0436\u0430\u0442\u0438 \u0432\u0456\u0434\u0441\u043e\u0442\u043e\u043a \u043f\u0435\u0440\u0435\u043c\u043e\u0433 \u0456 \u043a\u0456\u043b\u044c\u043a\u0456\u0441\u0442\u044c \u0431\u043e\u0457\u0432.{/BODY}'
                     },
-                    
-                    # Інформація про файл конфігурації
-                    {
-                        'type': 'Label',
-                        'text': 'Файл конфігурації також можна редагувати вручну.',
-                        'pos': {'x': 50, 'y': 520},
-                        'size': {'width': 400, 'height': 20},
-                        'color': '0xCCCCCC'
+                    {'type': 'Label',
+                     'text': '\u041d\u0430\u043b\u0430\u0448\u0442\u0443\u0432\u0430\u043d\u043d\u044f \u043f\u0430\u043d\u0435\u043b\u0456'
                     },
                     {
-                        'type': 'Label',
-                        'text': 'Розташування: [WoT]/mods/configs/under_pressure/config.json',
-                        'pos': {'x': 50, 'y': 540},
-                        'size': {'width': 500, 'height': 20},
-                        'color': '0xCCCCCC'
+                        'type': 'ColorChoice',
+                        'text': '\u041a\u043e\u043b\u0456\u0440 \u0444\u043e\u043d\u0443 \u043f\u0430\u043d\u0435\u043b\u0456',
+                        'value': panel_bg_color_value,
+                        'varName': 'panel-background-color',
+                        'tooltip': '{HEADER}\u0424\u043e\u043d \u043f\u0430\u043d\u0435\u043b\u0456{/HEADER}{BODY}\u0412\u0438\u0431\u0435\u0440\u0456\u0442\u044c \u043a\u043e\u043b\u0456\u0440 \u0444\u043e\u043d\u0443 \u0434\u043b\u044f \u043f\u0430\u043d\u0435\u043b\u0456.{/BODY}'
+                    },
+                    {
+                        'type': 'Slider',
+                        'text': '\u041f\u0440\u043e\u0437\u043e\u0440\u0456\u0441\u0442\u044c \u0444\u043e\u043d\u0443',
+                        'value': int(g_configParams.panelBackgroundAlpha.value * 100),
+                        'minimum': 0,
+                        'maximum': 100,
+                        'varName': 'panel-background-alpha',
+                        'tooltip': '{HEADER}\u041f\u0440\u043e\u0437\u043e\u0440\u0456\u0441\u0442\u044c{/HEADER}{BODY}\u041d\u0430\u043b\u0430\u0448\u0442\u0443\u0432\u0430\u043d\u043d\u044f \u043f\u0440\u043e\u0437\u043e\u0440\u043e\u0441\u0442\u0456 \u0444\u043e\u043d\u0443 \u043f\u0430\u043d\u0435\u043b\u0456.{/BODY}'
                     }
-                ]
+                ],
+                'column2': [
+                    {'type': 'Label',
+                     'text': '\u041a\u043e\u043b\u044c\u043e\u0440\u0438 \u0435\u043b\u0435\u043c\u0435\u043d\u0442\u0456\u0432'
+                    },
+                    {
+                        'type': 'ColorChoice',
+                        'text': '\u041a\u043e\u043b\u0456\u0440 \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043a\u0430',
+                        'value': header_color_value,
+                        'varName': 'header-color',
+                        'tooltip': '{HEADER}\u0417\u0430\u0433\u043e\u043b\u043e\u0432\u043e\u043a{/HEADER}{BODY}\u041a\u043e\u043b\u0456\u0440 \u0434\u043b\u044f \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043a\u0430 "-=Elo=-".{/BODY}'
+                    },
+                    {
+                        'type': 'ColorChoice',
+                        'text': '\u041a\u043e\u043b\u0456\u0440 \u0456\u043c\u0435\u043d \u0441\u043e\u044e\u0437\u043d\u0438\u043a\u0456\u0432',
+                        'value': allies_names_color_value,
+                        'varName': 'allies-names-color',
+                        'tooltip': '{HEADER}\u0406\u043c\u0435\u043d\u0430 \u0441\u043e\u044e\u0437\u043d\u0438\u043a\u0456\u0432{/HEADER}{BODY}\u041a\u043e\u043b\u0456\u0440 \u0434\u043b\u044f \u0432\u0456\u0434\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u043d\u044f \u0456\u043c\u0435\u043d \u0441\u043e\u044e\u0437\u043d\u0438\u043a\u0456\u0432.{/BODY}'
+                    },
+                    {
+                        'type': 'ColorChoice',
+                        'text': '\u041a\u043e\u043b\u0456\u0440 \u0456\u043c\u0435\u043d \u0432\u043e\u0440\u043e\u0433\u0456\u0432',
+                        'value': enemies_names_color_value,
+                        'varName': 'enemies-names-color',
+                        'tooltip': '{HEADER}\u0406\u043c\u0435\u043d\u0430 \u0432\u043e\u0440\u043e\u0433\u0456\u0432{/HEADER}{BODY}\u041a\u043e\u043b\u0456\u0440 \u0434\u043b\u044f \u0432\u0456\u0434\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u043d\u044f \u0456\u043c\u0435\u043d \u0432\u043e\u0440\u043e\u0433\u0456\u0432.{/BODY}'
+                    },
+                    {
+                        'type': 'ColorChoice',
+                        'text': '\u041a\u043e\u043b\u0456\u0440 \u0440\u0435\u0439\u0442\u0438\u043d\u0433\u0443 \u0441\u043e\u044e\u0437\u043d\u0438\u043a\u0456\u0432',
+                        'value': allies_rating_color_value,
+                        'varName': 'allies-rating-color',
+                        'tooltip': '{HEADER}\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u0441\u043e\u044e\u0437\u043d\u0438\u043a\u0456\u0432{/HEADER}{BODY}\u041a\u043e\u043b\u0456\u0440 \u0434\u043b\u044f \u0432\u0456\u0434\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u043d\u044f \u0440\u0435\u0439\u0442\u0438\u043d\u0433\u0443 \u0441\u043e\u044e\u0437\u043d\u0438\u043a\u0456\u0432.{/BODY}'
+                    },
+                    {
+                        'type': 'ColorChoice',
+                        'text': '\u041a\u043e\u043b\u0456\u0440 \u0440\u0435\u0439\u0442\u0438\u043d\u0433\u0443 \u0432\u043e\u0440\u043e\u0433\u0456\u0432',
+                        'value': enemies_rating_color_value,
+                        'varName': 'enemies-rating-color',
+                        'tooltip': '{HEADER}\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u0432\u043e\u0440\u043e\u0433\u0456\u0432{/HEADER}{BODY}\u041a\u043e\u043b\u0456\u0440 \u0434\u043b\u044f \u0432\u0456\u0434\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u043d\u044f \u0440\u0435\u0439\u0442\u0438\u043d\u0433\u0443 \u0432\u043e\u0440\u043e\u0433\u0456\u0432.{/BODY}'
+                    },
+                    {
+                        'type': 'ColorChoice',
+                        'text': '\u041a\u043e\u043b\u0456\u0440 \u043f\u0440\u0438\u0440\u043e\u0441\u0442\u0443 Elo',
+                        'value': elo_gain_color_value,
+                        'varName': 'elo-gain-color',
+                        'tooltip': '{HEADER}\u041f\u0440\u0438\u0440\u0456\u0441\u0442 Elo{/HEADER}{BODY}\u041a\u043e\u043b\u0456\u0440 \u0434\u043b\u044f \u0432\u0456\u0434\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u043d\u044f \u043f\u043e\u0437\u0438\u0442\u0438\u0432\u043d\u043e\u0457 \u0437\u043c\u0456\u043d\u0438 Elo.{/BODY}'
+                    },
+                    {
+                        'type': 'ColorChoice',
+                        'text': '\u041a\u043e\u043b\u0456\u0440 \u0432\u0442\u0440\u0430\u0442\u0438 Elo',
+                        'value': elo_loss_color_value,
+                        'varName': 'elo-loss-color',
+                        'tooltip': '{HEADER}\u0412\u0442\u0440\u0430\u0442\u0430 Elo{/HEADER}{BODY}\u041a\u043e\u043b\u0456\u0440 \u0434\u043b\u044f \u0432\u0456\u0434\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u043d\u044f \u043d\u0435\u0433\u0430\u0442\u0438\u0432\u043d\u043e\u0457 \u0437\u043c\u0456\u043d\u0438 Elo.{/BODY}'
+                    },
+                    {
+                        'type': 'ColorChoice',
+                        'text': '\u041a\u043e\u043b\u0456\u0440 \u0432\u0456\u0434\u0441\u043e\u0442\u043a\u0430 \u043f\u0435\u0440\u0435\u043c\u043e\u0433',
+                        'value': winrate_color_value,
+                        'varName': 'winrate-color',
+                        'tooltip': '{HEADER}\u0412\u0456\u0434\u0441\u043e\u0442\u043e\u043a \u043f\u0435\u0440\u0435\u043c\u043e\u0433{/HEADER}{BODY}\u041a\u043e\u043b\u0456\u0440 \u0434\u043b\u044f \u0432\u0456\u0434\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u043d\u044f \u0432\u0456\u0434\u0441\u043e\u0442\u043a\u0430 \u043f\u0435\u0440\u0435\u043c\u043e\u0433.{/BODY}'
+                    },
+                    {
+                        'type': 'ColorChoice',
+                        'text': '\u041a\u043e\u043b\u0456\u0440 \u043a\u0456\u043b\u044c\u043a\u043e\u0441\u0442\u0456 \u0431\u043e\u0457\u0432',
+                        'value': battles_color_value,
+                        'varName': 'battles-color',
+                        'tooltip': '{HEADER}\u041a\u0456\u043b\u044c\u043a\u0456\u0441\u0442\u044c \u0431\u043e\u0457\u0432{/HEADER}{BODY}\u041a\u043e\u043b\u0456\u0440 \u0434\u043b\u044f \u0432\u0456\u0434\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u043d\u044f \u043a\u0456\u043b\u044c\u043a\u043e\u0441\u0442\u0456 \u0431\u043e\u0457\u0432.{/BODY}'
+                    },
+                    {'type': 'Label',
+                     'text': '\u041d\u0430\u043b\u0430\u0448\u0442\u0443\u0432\u0430\u043d\u043d\u044f \u0442\u0456\u043d\u0456'
+                    },
+                    {
+                        'type': 'CheckBox',
+                        'text': '\u0423\u0432\u0456\u043c\u043a\u043d\u0443\u0442\u0438 \u0442\u0456\u043d\u044c \u0442\u0435\u043a\u0441\u0442\u0443',
+                        'value': g_configParams.textShadowEnabled.value,
+                        'varName': 'text-shadow-enabled',
+                        'tooltip': '{HEADER}\u0422\u0456\u043d\u044c \u0442\u0435\u043a\u0441\u0442\u0443{/HEADER}{BODY}\u0423\u0432\u0456\u043c\u043a\u043d\u0443\u0442\u0438 \u0430\u0431\u043e \u0432\u0438\u043c\u043a\u043d\u0443\u0442\u0438 \u0442\u0456\u043d\u044c \u0434\u043b\u044f \u0442\u0435\u043a\u0441\u0442\u0443.{/BODY}'
+                    },
+                    {
+                        'type': 'ColorChoice',
+                        'text': '\u041a\u043e\u043b\u0456\u0440 \u0442\u0456\u043d\u0456',
+                        'value': text_shadow_color_value,
+                        'varName': 'text-shadow-color',
+                        'tooltip': '{HEADER}\u041a\u043e\u043b\u0456\u0440 \u0442\u0456\u043d\u0456{/HEADER}{BODY}\u0412\u0438\u0431\u0435\u0440\u0456\u0442\u044c \u043a\u043e\u043b\u0456\u0440 \u0442\u0456\u043d\u0456 \u0434\u043b\u044f \u0442\u0435\u043a\u0441\u0442\u0443.{/BODY}'
+                    },
+                    {
+                        'type': 'Slider',
+                        'text': '\u041f\u0440\u043e\u0437\u043e\u0440\u0456\u0441\u0442\u044c \u0442\u0456\u043d\u0456',
+                        'value': int(g_configParams.textShadowAlpha.value * 100),
+                        'minimum': 0,
+                        'maximum': 100,
+                        'varName': 'text-shadow-alpha',
+                        'tooltip': '{HEADER}\u041f\u0440\u043e\u0437\u043e\u0440\u0456\u0441\u0442\u044c \u0442\u0456\u043d\u0456{/HEADER}{BODY}\u041d\u0430\u043b\u0430\u0448\u0442\u0443\u0432\u0430\u043d\u043d\u044f \u043f\u0440\u043e\u0437\u043e\u0440\u043e\u0441\u0442\u0456 \u0442\u0456\u043d\u0456 \u0442\u0435\u043a\u0441\u0442\u0443.{/BODY}'
+                    },
+                    {
+                        'type': 'Slider',
+                        'text': '\u0412\u0456\u0434\u0441\u0442\u0430\u043d\u044c \u0442\u0456\u043d\u0456',
+                        'value': int(g_configParams.textShadowDistance.value),
+                        'minimum': 0,
+                        'maximum': 10,
+                        'varName': 'text-shadow-distance',
+                        'tooltip': '{HEADER}\u0412\u0456\u0434\u0441\u0442\u0430\u043d\u044c \u0442\u0456\u043d\u0456{/HEADER}{BODY}\u0412\u0456\u0434\u0441\u0442\u0430\u043d\u044c \u0442\u0456\u043d\u0456 \u0432\u0456\u0434 \u0442\u0435\u043a\u0441\u0442\u0443.{/BODY}'
+                    },
+                    {
+                        'type': 'Slider',
+                        'text': '\u0420\u043e\u0437\u043c\u0438\u0442\u0442\u044f \u0442\u0456\u043d\u0456',
+                        'value': int(g_configParams.textShadowBlur.value),
+                        'minimum': 0,
+                        'maximum': 10,
+                        'varName': 'text-shadow-blur',
+                        'tooltip': '{HEADER}\u0420\u043e\u0437\u043c\u0438\u0442\u0442\u044f \u0442\u0456\u043d\u0456{/HEADER}{BODY}\u0420\u043e\u0437\u043c\u0438\u0442\u0442\u044f \u0435\u0444\u0435\u043a\u0442\u0443 \u0442\u0456\u043d\u0456.{/BODY}'
+                    },
+                    {'type': 'Label',
+                     'text': '\u0406\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044f \u043f\u0440\u043e \u0444\u0430\u0439\u043b \u043a\u043e\u043d\u0444\u0456\u0433\u0443\u0440\u0430\u0446\u0456\u0457',
+                     'tooltip': '{HEADER}\u0424\u0430\u0439\u043b \u043a\u043e\u043d\u0444\u0456\u0433\u0443\u0440\u0430\u0446\u0456\u0457{/HEADER}{BODY}\u0424\u0430\u0439\u043b \u043a\u043e\u043d\u0444\u0456\u0433\u0443\u0440\u0430\u0446\u0456\u0457 \u0437\u043d\u0430\u0445\u043e\u0434\u0438\u0442\u044c\u0441\u044f \u0432 \u043f\u0430\u043f\u0446\u0456 [\u041f\u0430\u043f\u043a\u0430 \u0456\u0437 \u0433\u0440\u043e\u044e]\\mods\\configs\\under_pressure \u043f\u0456\u0434 \u043d\u0430\u0437\u0432\u043e\u044e config.json. \n\u042f\u043a\u0449\u043e \u0432\u0438 \u0445\u043e\u0447\u0435\u0442\u0435 \u0437\u0433\u0435\u043d\u0435\u0440\u0443\u0432\u0430\u0442\u0438 \u043a\u043e\u043d\u0444\u0456\u0433\u0443\u0440\u0430\u0446\u0456\u044e \u043f\u043e \u0437\u0430\u043c\u043e\u0432\u0447\u0443\u0432\u0430\u043d\u043d\u044e \u0442\u043e \u0432\u0438\u0434\u0430\u043b\u0456\u0442\u044c \u0434\u0430\u043d\u0438\u0439 \u0444\u0430\u0439\u043b \u0456 \u043f\u0435\u0440\u0435\u0437\u0430\u043f\u0443\u0441\u0442\u0456\u0442\u044c \u0433\u0440\u0443. \u0422\u0430\u043a\u043e\u0436 \u0444\u0430\u0439\u043b \u043a\u043e\u043d\u0444\u0456\u0433\u0443\u0440\u0430\u0446\u0456\u0457 \u043c\u043e\u0436\u043d\u0430 \u0440\u0435\u0434\u0430\u0433\u0443\u0432\u0430\u0442\u0438 \u0432\u0440\u0443\u0447\u043d\u0443.{/BODY}'
+                    }
+                ] 
             }
 
-            # Реєстрація в ModsSettingsAPI
             current_settings = g_modsSettingsApi.getModSettings(modLinkage, template)
-            
+
             if current_settings is None:
                 self.settings = g_modsSettingsApi.setModTemplate(
                     modLinkage,
@@ -308,9 +256,8 @@ class Config(object):
                     self.on_settings_changed,
                     self.on_button_clicked
                 )
-                
+
             print_debug("Mod registered in ModsSettingsAPI")
-            
         except Exception as e:
             print_error("Failed to register mod: %s" % str(e))
 
@@ -323,77 +270,95 @@ class Config(object):
         if linkage != modLinkage:
             return
         try:
-            print_debug("Settings changed: %s" % str(newSettings))
-            
             for tokenName, value in newSettings.items():
                 if tokenName in g_configParams.items():
                     param = g_configParams.items()[tokenName]
-                    # Конвертація значення з MSA формату
-                    param.value = param.fromMsaValue(value)
-                    param.msaValue = value
-                    print_debug("Updated %s: %s (msa: %s)" % (tokenName, param.value, value))
-            
+                    
+                    # Спеціальна обробка для кольорів
+                    if 'color' in tokenName and isinstance(value, basestring):
+                        param.value = _color_from_hex(value)
+                    # Спеціальна обробка для слайдерів з відсотками
+                    elif tokenName in ['panel-background-alpha', 'text-shadow-alpha']:
+                        param.value = float(value) / 100.0
+                    # Звичайна обробка
+                    elif hasattr(param, 'msaValue'):
+                        param.msaValue = value
+                    else:
+                        param.value = value
+                        
             self.save_config()
             
-            # Оповістити multiTextPanel про зміни
-            self._notify_panel_changes()
-            
+            # Оновлення інтерфейсу після зміни налаштувань
+            from . import g_multiTextPanel
+            if g_multiTextPanel:
+                g_multiTextPanel.refresh_colors_and_effects()
+                g_multiTextPanel.update_hotkeys()
+                
+                # Перевірка чи змінилась видимість елементів
+                visibility_params = ['show-player-names', 'show-elo-changes', 'show-winrate-battles']
+                if any(param in newSettings for param in visibility_params):
+                    g_multiTextPanel.recreate_components_with_visibility_changes()
+                
             print_debug("Settings updated successfully")
-            
         except Exception as e:
             print_error("Error updating settings: %s" % str(e))
 
-    def _notify_panel_changes(self):
-        """Оповіщення панелі про зміни конфігурації"""
-        try:
-            from . import g_multiTextPanel
-            if g_multiTextPanel:
-                g_multiTextPanel.update_hotkeys()
-                g_multiTextPanel.update_panel_settings()
-                print_debug("Panel notified about config changes")
-        except Exception as e:
-            print_debug("Could not notify panel about changes: %s" % str(e))
-
-    def sync_with_msa(self):
-        """Синхронізація значень з ModsSettingsAPI"""
-        try:
-            if hasattr(self, 'settings') and self.settings:
-                current_settings = g_modsSettingsApi.getModSettings(modLinkage, None)
-                if current_settings:
-                    self.on_settings_changed(modLinkage, current_settings)
-                    print_debug("Config synced with MSA")
-        except Exception as e:
-            print_debug("Could not sync with MSA: %s" % str(e))
-
     def save_config(self):
         try:
+            import os
+            config_dir = os.path.dirname(self.config_path)
+            if not os.path.exists(config_dir):
+                os.makedirs(config_dir)
+                
             config_data = {}
             for tokenName, param in g_configParams.items().items():
                 config_data[tokenName] = param.value
 
             with open(self.config_path, 'w') as f:
-                json.dump(config_data, f, indent=4)
+                json.dump(config_data, f, indent=4, ensure_ascii=False)
             print_debug("Config saved successfully")
         except Exception as e:
             print_error("Error saving config: %s" % str(e))
 
     def load_config(self):
         try:
-            if os.path.exists(self.config_path):
-                with open(self.config_path, 'r') as f:
-                    config_data = json.load(f)
+            import os
+            if not os.path.exists(self.config_path):
+                print_debug("Config file not found, using defaults")
+                return
                 
-                for tokenName, value in config_data.items():
-                    if tokenName in g_configParams.items():
-                        param = g_configParams.items()[tokenName]
-                        param.value = param.fromJsonValue(value)
-                        print_debug("Loaded %s: %s" % (tokenName, param.value))
+            with open(self.config_path, 'r') as f:
+                config_data = json.load(f)
                 
-                print_debug("Config loaded successfully")
-            else:
-                print_debug("Config file does not exist, using defaults")
-                
+            for tokenName, value in config_data.items():
+                if tokenName in g_configParams.items():
+                    param = g_configParams.items()[tokenName]
+                    param.value = value
+                    
+            print_debug("Config loaded successfully")
         except Exception as e:
-            print_error("Error loading config: %s" % str(e))
+            print_debug("Config file not found or invalid, using defaults: %s" % str(e))
 
-g_config = None
+    def sync_with_msa(self):
+        try:
+            if self.settings:
+                current_config = {}
+                for tokenName, param in g_configParams.items().items():
+                    # Конвертація кольорів для MSA
+                    if 'color' in tokenName:
+                        current_config[tokenName] = _color_to_hex(param.value)
+                    # Конвертація слайдерів з відсотками
+                    elif tokenName in ['panel-background-alpha', 'text-shadow-alpha']:
+                        current_config[tokenName] = int(param.value * 100)
+                    # Звичайні значення
+                    elif hasattr(param, 'msaValue'):
+                        current_config[tokenName] = param.msaValue
+                    else:
+                        current_config[tokenName] = param.value
+                        
+                g_modsSettingsApi.updateModSettings(modLinkage, current_config)
+                print_debug("Config synchronized with ModsSettingsAPI")
+        except Exception as e:
+            print_error("Error synchronizing config with MSA: %s" % str(e))
+
+g_config = Config()

@@ -19,8 +19,6 @@ class EloCalc:
         
         k1 = self._get_k_factor(allies_rating)
 
-        # eloPlus = round(k1 * (1 - expected1),2)
-        # eloMinus = round(k1 * (0 - expected1),2)
         eloPlus = int(round(k1 * (1 - expected1)))
         eloMinus = int(round(k1 * (0 - expected1)))
 
