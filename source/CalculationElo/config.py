@@ -93,13 +93,6 @@ class Config(object):
                         'text': u'Основні налаштування'
                     },
                     {
-                        'type': 'CheckBox',
-                        'text': u'Увімкнути мод',
-                        'value': g_configParams.enabled.defaultMsaValue,
-                        'varName': 'enabled',
-                        'tooltip': u'{HEADER}Увімкнути мод{/HEADER}{BODY}Увімкнути або вимкнути мод Калькулятор Ело{/BODY}'
-                    },
-                    {
                         'type': 'Dropdown',
                         'text': u'Режим відображення',
                         'value': g_configParams.displayMode.defaultMsaValue,
@@ -146,10 +139,10 @@ class Config(object):
                     },
                     {
                         'type': 'CheckBox',
-                        'text': u'Показувати статистику боїв',
+                        'text': u'Показувати статистику боїв суперника',
                         'value': g_configParams.showWinrateAndBattles.defaultMsaValue,
                         'varName': 'show-winrate-and-battles',
-                        'tooltip': u'{HEADER}Показувати статистику{/HEADER}{BODY}Показувати відсоток перемог та кількість боїв{/BODY}'
+                        'tooltip': u'{HEADER}Показувати статистику{/HEADER}{BODY}Показувати відсоток перемог та кількість боїв суперника{/BODY}'
                     }
                 ],
                 'tabs': [
