@@ -43,11 +43,9 @@ class ConfigParams(object):
             defaultValue=DisplayMode.ALWAYS
         )
         self.eloHotKey = HotKeyParam(['elo-hotkey'], defaultValue=[Keys.KEY_LALT])
+
+        self.panelPosition = ListParam(['panel-position'], defaultValue=[475, 50])
         
-        # Панель налаштування (використовуємо список, а не ColorParam)
-        self.panelPosition = ListParam(['panel-position'], defaultValue=[565, 50])
-        
-        # Кольори
         self.headerColor = ColorParam(['header-color'], defaultValue=[255, 255, 255])
         self.alliesNamesColor = ColorParam(['allies-names-color'], defaultValue=[79, 134, 39])
         self.enemiesNamesColor = ColorParam(['enemies-names-color'], defaultValue=[154, 1, 1])
@@ -57,14 +55,13 @@ class ConfigParams(object):
         self.eloLossColor = ColorParam(['elo-loss-color'], defaultValue=[255, 0, 0])
         self.winrateColor = ColorParam(['winrate-color'], defaultValue=[255, 255, 0])
         self.battlesColor = ColorParam(['battles-color'], defaultValue=[255, 255, 255])
-        
-        # Налаштування видимості компонентів
+
         self.showTitleVisible = BooleanParam(['show-title-visible'], defaultValue=True)
         self.showTeamNames = BooleanParam(['show-team-names'], defaultValue=True)
         self.showEloChanges = BooleanParam(['show-elo-changes'], defaultValue=True)
         self.showWinrateAndBattles = BooleanParam(['show-winrate-and-battles'], defaultValue=True)
         
-        # Налаштування тіні тексту
+
         self.textShadowEnabled = BooleanParam(['text-shadow-enabled'], defaultValue=True)
         self.textShadowColor = ColorParam(['text-shadow-color'], defaultValue=[0, 0, 0])
         self.textShadowDistance = ListParam(['text-shadow-distance'], defaultValue=[1])

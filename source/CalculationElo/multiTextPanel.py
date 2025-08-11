@@ -76,8 +76,7 @@ class MultiTextPanel:
             print_debug("[MultiTextPanel] Creating text fields with visibility: %s" % isVisible)
             
             current_y = 5
-            
-            # Перевіряємо налаштування видимості заголовка
+
             if g_configParams.showTitleVisible.value:
                 header_component_id = 'eloInfoPanel.headerText'
                 header_color = g_configParams.headerColor.getHexColor()
@@ -94,7 +93,6 @@ class MultiTextPanel:
                 })
                 current_y += 20
             
-            # Заміна showPlayerNames на showTeamNames
             if g_configParams.showTeamNames.value:
                 names_component_id = 'eloInfoPanel.namesText'
                 allies_name_color = g_configParams.alliesNamesColor.getHexColor()
@@ -185,8 +183,7 @@ class MultiTextPanel:
                     'shadow': self._getShadowConfig()
                 })
             
-            # Розрахунок видимих елементів
-            visible_elements = 1  # Рейтинги завжди видимі
+            visible_elements = 1  
             if g_configParams.showTitleVisible.value:
                 visible_elements += 1
             if g_configParams.showTeamNames.value:
@@ -207,7 +204,6 @@ class MultiTextPanel:
         try:
             print_debug("[MultiTextPanel] Updating text fields")
             
-            # Оновлення заголовка (якщо видимий)
             if g_configParams.showTitleVisible.value:
                 header_component_id = 'eloInfoPanel.headerText'
                 header_color = g_configParams.headerColor.getHexColor()
@@ -218,8 +214,7 @@ class MultiTextPanel:
                         'text': header_text,
                         'shadow': self._getShadowConfig()
                     })
-            
-            # Заміна showPlayerNames на showTeamNames
+
             if g_configParams.showTeamNames.value:
                 names_component_id = 'eloInfoPanel.namesText'
                 allies_name_color = g_configParams.alliesNamesColor.getHexColor()
@@ -291,8 +286,7 @@ class MultiTextPanel:
                         'shadow': self._getShadowConfig()
                     })
             
-            # Розрахунок видимих елементів
-            visible_elements = 1  # Рейтинги завжди видимі
+            visible_elements = 1  
             if g_configParams.showTitleVisible.value:
                 visible_elements += 1
             if g_configParams.showTeamNames.value:
@@ -318,7 +312,6 @@ class MultiTextPanel:
             shadow_color = g_configParams.textShadowColor.value
             shadow_color_int = (shadow_color[0] << 16) | (shadow_color[1] << 8) | shadow_color[2]
             
-            # Обробка параметрів тіні (можуть бути списками)
             distance_val = g_configParams.textShadowDistance.value
             distance = distance_val[0] if isinstance(distance_val, list) and len(distance_val) > 0 else distance_val
             
