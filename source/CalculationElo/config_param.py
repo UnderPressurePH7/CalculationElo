@@ -44,7 +44,7 @@ class ConfigParams(object):
         )
         self.eloHotKey = HotKeyParam(['elo-hotkey'], defaultValue=[Keys.KEY_LALT])
 
-        self.panelPosition = ListParam(['panel-position'], defaultValue=[405, 50])
+        self.panelPosition = ListParam(['panel-position'], defaultValue=[550, 50])
         
         self.headerColor = ColorParam(['header-color'], defaultValue=[255, 255, 255])
         self.alliesNamesColor = ColorParam(['allies-names-color'], defaultValue=[79, 134, 39])
