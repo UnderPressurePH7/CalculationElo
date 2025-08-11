@@ -18,6 +18,7 @@ class MultiTextPanel:
     def __init__(self):
         print_debug("[MultiTextPanel] Initializing...")
         self.panel_id = 'eloInfoPanel'
+        self.img_battle = '<img height="14px" width="14px" src="https://cdn-icons-png.flaticon.com/512/1643/1643160.png"/>'
         self.isKeyPressed = False
         self.active_keys = {}
         
@@ -172,7 +173,7 @@ class MultiTextPanel:
                 winrate_str = "{}%".format(wins_percent) if wins_percent else "0%"
                 battles_str = str(battles_count) if battles_count else "0"
                 
-                stats_text = '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font><font face="Tahoma" size="14" color="{2}"><b>({3})</b></font>'.format(
+                stats_text ='<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font><font face="Tahoma" size="14" color="{2}"><b>({3})</b></font>'.format(
                      battles_color, battles_str, winrate_color, winrate_str
                 )
                 
@@ -276,7 +277,7 @@ class MultiTextPanel:
                 winrate_str = "{}%".format(wins_percent) if wins_percent else "0%"
                 battles_str = str(battles_count) if battles_count else "0"
                 
-                stats_text = '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font><font face="Tahoma" size="14" color="{2}"><b> ({3})</b></font>'.format(
+                stats_text ='<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font><font face="Tahoma" size="14" color="{2}"><b> ({3})</b></font>'.format(
                     battles_color, battles_str, winrate_color, winrate_str
                 )
                 
