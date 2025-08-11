@@ -57,20 +57,16 @@ class ConfigParams(object):
             defaultValue=DisplayMode.ALWAYS
         )
         self.eloHotKey = HotKeyParam(['elo-hotkey'], defaultValue=[Keys.KEY_LALT])
-        
-        # Початкова позиція панелі
+
         self.panelPosition = PositionParam(['panel-position'], defaultValue=[565, 50])
         
-        # Видимість окремих полів
         self.showPlayerNames = BooleanParam(['show-player-names'], defaultValue=True)
         self.showEloChanges = BooleanParam(['show-elo-changes'], defaultValue=True) 
         self.showWinrateAndBattles = BooleanParam(['show-winrate-battles'], defaultValue=True)
         
-        # Прозорість фону панелі
         self.panelBackgroundAlpha = SliderParam(['panel-background-alpha'], minValue=0.0, maxValue=1.0, defaultValue=0.8)
         self.panelBackgroundColor = ColorParam(['panel-background-color'], defaultValue=[0, 0, 0])
         
-        # Кольори для різних елементів
         self.headerColor = ColorParam(['header-color'], defaultValue=[255, 255, 255])
         self.alliesNamesColor = ColorParam(['allies-names-color'], defaultValue=[79, 134, 39])
         self.enemiesNamesColor = ColorParam(['enemies-names-color'], defaultValue=[154, 1, 1])
@@ -81,7 +77,6 @@ class ConfigParams(object):
         self.winrateColor = ColorParam(['winrate-color'], defaultValue=[255, 255, 255])
         self.battlesColor = ColorParam(['battles-color'], defaultValue=[255, 255, 255])
         
-        # Тінь для тексту
         self.textShadowEnabled = BooleanParam(['text-shadow-enabled'], defaultValue=True)
         self.textShadowColor = ColorParam(['text-shadow-color'], defaultValue=[0, 0, 0])
         self.textShadowAlpha = SliderParam(['text-shadow-alpha'], minValue=0.0, maxValue=1.0, defaultValue=0.5)

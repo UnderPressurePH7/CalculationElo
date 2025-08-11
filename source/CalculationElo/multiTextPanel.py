@@ -43,7 +43,7 @@ class MultiTextPanel:
                 g_guiFlash.createComponent(self.panel_id, COMPONENT_TYPE.PANEL, {
                     'x': position[0],
                     'y': position[1],
-                    'width': 200,
+                    'width': 150,
                     'height': 120,
                     'drag': True,
                     'border': False,
@@ -81,14 +81,13 @@ class MultiTextPanel:
             
             current_y = 5
             
-            # Заголовок -=Elo=-
             header_component_id = '{}.headerText'.format(self.panel_id)
             header_color = g_configParams.headerColor.getHexColor()
             header_text = '<font face="Tahoma" size="14" color="{0}"><b>-=Elo=-</b></font>'.format(header_color)
             
             g_guiFlash.createComponent(header_component_id, COMPONENT_TYPE.LABEL, {
                 'text': header_text,
-                'x': 5,
+                'x': 10,
                 'y': current_y,
                 'alignX': COMPONENT_ALIGN.CENTER,
                 'isHtml': True,
@@ -97,7 +96,6 @@ class MultiTextPanel:
             })
             current_y += 20
             
-            # Назви гравців (якщо видимі)
             if g_configParams.showPlayerNames.value:
                 names_component_id = '{}.namesText'.format(self.panel_id)
                 allies_name_color = g_configParams.alliesNamesColor.getHexColor()
@@ -106,60 +104,13 @@ class MultiTextPanel:
                 allies_short = (allies[:5].upper() if allies else "N/A")
                 enemies_short = (enemies[:5].upper() if enemies else "N/A")
                 
-                names_text = '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font><font face="Tahoma" size="18" color="{2}"><b>          {3}</b></font>'.format(
+                names_text = '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font><font face="Tahoma" size="18" color="{2}"><b>  {3}</b></font>'.format(
                     allies_name_color, allies_short, enemies_name_color, enemies_short
                 )
                 
                 g_guiFlash.createComponent(names_component_id, COMPONENT_TYPE.LABEL, {
                     'text': names_text,
-                    'x': 10,
-                    'y': current_y,
-                    'alignX': COMPONENT_ALIGN.LEFT,
-                    'isHtml': True,
-                    'visible': isVisible,
-                    'shadow': self._getShadowConfig()
-                })
-                current_y += 25
-            
-            # Рейтинги
-            ratings_component_id = '{}.ratingsText'.format(self.panel_id)
-            allies_rating_color = g_configParams.alliesRatingColor.getHexColor()
-            enemies_rating_color = g_configParams.enemiesRatingColor.getHexColor()
-            
-            allies_rating_str = str(allies_rating).zfill(4) if allies_rating else "0000"
-            enemies_rating_str = str(enemies_rating).zfill(4) if enemies_rating else "0000"
-            
-            ratings_text = '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font><font face="Tahoma" size="18" color="{2}"><b>          {3}</b></font>'.format(
-                allies_rating_color, allies_rating_str, enemies_rating_color, enemies_rating_str
-            )
-            
-            g_guiFlash.createComponent(ratings_component_id, COMPONENT_TYPE.LABEL, {
-                'text': ratings_text,
-                'x': 10,
-                'y': current_y,
-                'alignX': COMPONENT_ALIGN.LEFT,
-                'isHtml': True,
-                'visible': isVisible,
-                'shadow': self._getShadowConfig()
-            })
-            current_y += 25
-            
-            # Зміни Elo (якщо видимі)
-            if g_configParams.showEloChanges.value:
-                elo_component_id = '{}.eloText'.format(self.panel_id)
-                elo_gain_color = g_configParams.eloGainColor.getHexColor()
-                elo_loss_color = g_configParams.eloLossColor.getHexColor()
-                
-                elo_plus_str = "+{}".format(eloPlus) if eloPlus else "+0"
-                elo_minus_str = "-{}".format(abs(eloMinus)) if eloMinus else "-0"
-                
-                elo_text = '<font face="Tahoma" size="12" color="{0}"><b>{1}</b></font><font face="Tahoma" size="12" color="{2}"><b>          {3}</b></font>'.format(
-                    elo_gain_color, elo_plus_str, elo_loss_color, elo_minus_str
-                )
-                
-                g_guiFlash.createComponent(elo_component_id, COMPONENT_TYPE.LABEL, {
-                    'text': elo_text,
-                    'x': 10,
+                    'x': 5,
                     'y': current_y,
                     'alignX': COMPONENT_ALIGN.LEFT,
                     'isHtml': True,
@@ -168,7 +119,51 @@ class MultiTextPanel:
                 })
                 current_y += 20
             
-            # Відсоток перемог і кількість боїв (якщо видимі)
+            ratings_component_id = '{}.ratingsText'.format(self.panel_id)
+            allies_rating_color = g_configParams.alliesRatingColor.getHexColor()
+            enemies_rating_color = g_configParams.enemiesRatingColor.getHexColor()
+            
+            allies_rating_str = str(allies_rating).zfill(4) if allies_rating else "0000"
+            enemies_rating_str = str(enemies_rating).zfill(4) if enemies_rating else "0000"
+            
+            ratings_text = '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font><font face="Tahoma" size="18" color="{2}"><b>      {3}</b></font>'.format(
+                allies_rating_color, allies_rating_str, enemies_rating_color, enemies_rating_str
+            )
+            
+            g_guiFlash.createComponent(ratings_component_id, COMPONENT_TYPE.LABEL, {
+                'text': ratings_text,
+                'x': 5,
+                'y': current_y,
+                'alignX': COMPONENT_ALIGN.CENTER,
+                'isHtml': True,
+                'visible': isVisible,
+                'shadow': self._getShadowConfig()
+            })
+            current_y += 21
+            
+            if g_configParams.showEloChanges.value:
+                elo_component_id = '{}.eloText'.format(self.panel_id)
+                elo_gain_color = g_configParams.eloGainColor.getHexColor()
+                elo_loss_color = g_configParams.eloLossColor.getHexColor()
+                
+                elo_plus_str = "+{}".format(eloPlus) if eloPlus else "+0"
+                elo_minus_str = "-{}".format(abs(eloMinus)) if eloMinus else "-0"
+                
+                elo_text = '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font><font face="Tahoma" size="12" color="{2}"><b>          {3}</b></font>'.format(
+                    elo_gain_color, elo_plus_str, elo_loss_color, elo_minus_str
+                )
+                
+                g_guiFlash.createComponent(elo_component_id, COMPONENT_TYPE.LABEL, {
+                    'text': elo_text,
+                    'x': 5,
+                    'y': current_y,
+                    'alignX': COMPONENT_ALIGN.CENTER,
+                    'isHtml': True,
+                    'visible': isVisible,
+                    'shadow': self._getShadowConfig()
+                })
+                current_y += 17
+            
             if g_configParams.showWinrateAndBattles.value:
                 stats_component_id = '{}.statsText'.format(self.panel_id)
                 winrate_color = g_configParams.winrateColor.getHexColor()
@@ -177,22 +172,21 @@ class MultiTextPanel:
                 winrate_str = "{}%".format(wins_percent) if wins_percent else "0%"
                 battles_str = str(battles_count) if battles_count else "0"
                 
-                stats_text = '<font face="Tahoma" size="12" color="{0}"><b>{1}</b></font><font face="Tahoma" size="12" color="{2}"><b>          {3}</b></font>'.format(
-                    winrate_color, winrate_str, battles_color, battles_str
+                stats_text = '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font><font face="Tahoma" size="12" color="{2}"><b>({3})</b></font>'.format(
+                     battles_color, battles_str, winrate_color, winrate_str
                 )
                 
                 g_guiFlash.createComponent(stats_component_id, COMPONENT_TYPE.LABEL, {
                     'text': stats_text,
-                    'x': 10,
+                    'x': 5,
                     'y': current_y,
-                    'alignX': COMPONENT_ALIGN.LEFT,
+                    'alignX': COMPONENT_ALIGN.CENTER,
                     'isHtml': True,
                     'visible': isVisible,
                     'shadow': self._getShadowConfig()
                 })
             
-            # Оновлення висоти панелі залежно від видимих елементів
-            visible_elements = 2  # header + ratings завжди видимі
+            visible_elements = 2 
             if g_configParams.showPlayerNames.value:
                 visible_elements += 1
             if g_configParams.showEloChanges.value:
@@ -211,7 +205,6 @@ class MultiTextPanel:
         try:
             print_debug("[MultiTextPanel] Updating text fields")
             
-            # Оновлення заголовка
             header_component_id = '{}.headerText'.format(self.panel_id)
             header_color = g_configParams.headerColor.getHexColor()
             header_text = '<font face="Tahoma" size="14" color="{0}"><b>-=Elo=-</b></font>'.format(header_color)
@@ -222,7 +215,6 @@ class MultiTextPanel:
                     'shadow': self._getShadowConfig()
                 })
             
-            # Оновлення назв гравців (якщо видимі)
             if g_configParams.showPlayerNames.value:
                 names_component_id = '{}.namesText'.format(self.panel_id)
                 allies_name_color = g_configParams.alliesNamesColor.getHexColor()
@@ -231,7 +223,7 @@ class MultiTextPanel:
                 allies_short = (allies[:5].upper() if allies else "N/A")
                 enemies_short = (enemies[:5].upper() if enemies else "N/A")
                 
-                names_text = '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font><font face="Tahoma" size="18" color="{2}"><b>          {3}</b></font>'.format(
+                names_text = '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font><font face="Tahoma" size="18" color="{2}"><b>  {3}</b></font>'.format(
                     allies_name_color, allies_short, enemies_name_color, enemies_short
                 )
                 
@@ -240,8 +232,7 @@ class MultiTextPanel:
                         'text': names_text,
                         'shadow': self._getShadowConfig()
                     })
-            
-            # Оновлення рейтингів
+
             ratings_component_id = '{}.ratingsText'.format(self.panel_id)
             allies_rating_color = g_configParams.alliesRatingColor.getHexColor()
             enemies_rating_color = g_configParams.enemiesRatingColor.getHexColor()
@@ -249,7 +240,7 @@ class MultiTextPanel:
             allies_rating_str = str(allies_rating).zfill(4) if allies_rating else "0000"
             enemies_rating_str = str(enemies_rating).zfill(4) if enemies_rating else "0000"
             
-            ratings_text = '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font><font face="Tahoma" size="18" color="{2}"><b>          {3}</b></font>'.format(
+            ratings_text = '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font><font face="Tahoma" size="18" color="{2}"><b>      {3}</b></font>'.format(
                 allies_rating_color, allies_rating_str, enemies_rating_color, enemies_rating_str
             )
             
@@ -259,7 +250,6 @@ class MultiTextPanel:
                     'shadow': self._getShadowConfig()
                 })
             
-            # Оновлення змін Elo (якщо видимі)
             if g_configParams.showEloChanges.value:
                 elo_component_id = '{}.eloText'.format(self.panel_id)
                 elo_gain_color = g_configParams.eloGainColor.getHexColor()
@@ -278,7 +268,6 @@ class MultiTextPanel:
                         'shadow': self._getShadowConfig()
                     })
             
-            # Оновлення статистики (якщо видима)
             if g_configParams.showWinrateAndBattles.value:
                 stats_component_id = '{}.statsText'.format(self.panel_id)
                 winrate_color = g_configParams.winrateColor.getHexColor()
@@ -287,8 +276,8 @@ class MultiTextPanel:
                 winrate_str = "{}%".format(wins_percent) if wins_percent else "0%"
                 battles_str = str(battles_count) if battles_count else "0"
                 
-                stats_text = '<font face="Tahoma" size="12" color="{0}"><b>{1}</b></font><font face="Tahoma" size="12" color="{2}"><b>          {3}</b></font>'.format(
-                    winrate_color, winrate_str, battles_color, battles_str
+                stats_text = '<font face="Tahoma" size="12" color="{0}"><b>{1}</b></font><font face="Tahoma" size="12" color="{2}"><b> ({3})</b></font>'.format(
+                    battles_color, battles_str, winrate_color, winrate_str
                 )
                 
                 if g_guiCache.isComponent(stats_component_id):
@@ -297,8 +286,7 @@ class MultiTextPanel:
                         'shadow': self._getShadowConfig()
                     })
             
-            # Оновлення висоти панелі
-            visible_elements = 2  # header + ratings завжди видимі
+            visible_elements = 2  
             if g_configParams.showPlayerNames.value:
                 visible_elements += 1
             if g_configParams.showEloChanges.value:
@@ -441,8 +429,7 @@ class MultiTextPanel:
     def refresh_colors_and_effects(self):
         try:
             print_debug("[MultiTextPanel] Refreshing colors and effects")
-            
-            # Оновлення фону панелі
+
             bg_color = g_configParams.panelBackgroundColor.value
             bg_alpha = g_configParams.panelBackgroundAlpha.value
             bg_color_int = (bg_color[0] << 16) | (bg_color[1] << 8) | bg_color[2]
@@ -453,7 +440,6 @@ class MultiTextPanel:
                     'backgroundAlpha': bg_alpha
                 })
             
-            # Оновлення тіні для всіх текстових компонентів
             shadow_config = self._getShadowConfig()
             component_ids = [
                 '{}.headerText'.format(self.panel_id),
@@ -475,7 +461,6 @@ class MultiTextPanel:
         try:
             print_debug("[MultiTextPanel] Recreating components due to visibility changes")
             
-            # Видалити всі компоненти окрім головної панелі
             component_ids = [
                 '{}.headerText'.format(self.panel_id),
                 '{}.namesText'.format(self.panel_id),
@@ -488,7 +473,6 @@ class MultiTextPanel:
                 if g_guiCache.isComponent(component_id):
                     g_guiFlash.deleteComponent(component_id)
             
-            # Перевірити чи потрібно створювати компоненти
             from . import g_arenaInfoProvider
             if g_arenaInfoProvider and g_arenaInfoProvider.team_info:
                 print_debug("[MultiTextPanel] Recreating components with current team info")
