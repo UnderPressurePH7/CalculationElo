@@ -5,11 +5,10 @@ from gui import InputHandler
 from gui.shared.utils.key_mapping import getBigworldNameFromKey
 
 from gui.mods.gambiter import g_guiFlash, utils
-from gui.mods.gambiter.flash import COMPONENT_TYPE, COMPONENT_ALIGN, g_guiCache
+from gui.mods.gambiter.flash import COMPONENT_TYPE, COMPONENT_ALIGN, g_guiCache, COMPONENT_EVENT
 
 from .config_param import g_configParams
 from .utils import print_log, print_error, print_debug
-from . import *
 
 class MultiTextPanel:
 
@@ -19,6 +18,12 @@ class MultiTextPanel:
         print_debug("[MultiTextPanel] Initializing...")
         self.isKeyPressed = False
         self.active_keys = {}
+        
+        self.currentPanelX = g_configParams.panelPosition.value[0]
+        self.currentPanelY = g_configParams.panelPosition.value[1] 
+        self.wasPositionEdited = False
+        
+        COMPONENT_EVENT.UPDATED += self._onComponentUpdated
         
         try:
             initial_keys = g_configParams.eloHotKey.value
@@ -35,26 +40,70 @@ class MultiTextPanel:
         try:
             if not g_guiCache.isComponent('eloInfoPanel'): 
                 print_debug("[MultiTextPanel] Creating main panel component...")
-                position = g_configParams.panelPosition.value
                 
                 g_guiFlash.createComponent('eloInfoPanel', COMPONENT_TYPE.PANEL, {
-                    'x': position[0],
-                    'y': position[1],
+                    'x': self.currentPanelX,
+                    'y': self.currentPanelY,
                     'width': 165,
                     'height': 120,
-                    'drag': True,
+                    'drag': True, 
+                    'limit': True,  
                     'border': False,
                     'alignX': COMPONENT_ALIGN.LEFT,
                     'alignY': COMPONENT_ALIGN.TOP,
                     'visible': True
                 })
-                print_debug("[MultiTextPanel] Main panel created successfully")
+                
+                print_debug("[MultiTextPanel] Main panel created successfully at position: [%d, %d]" % 
+                           (self.currentPanelX, self.currentPanelY))
             else:
                 print_debug("[MultiTextPanel] Main panel already exists")
         except Exception as e:
             print_error("[MultiTextPanel] Error creating main panel: %s" % str(e))
         
         print_debug("[MultiTextPanel] Initialization complete")
+
+    def _onComponentUpdated(self, alias, props):
+        """
+        Обробник події COMPONENT_EVENT.UPDATED від GUIFlash
+        Викликається коли будь-який компонент оновлюється (включаючи перетягування)
+        """
+        try:
+            if alias != 'eloInfoPanel':
+                return
+                
+            new_x = props.get('x')
+            new_y = props.get('y')
+            
+            if new_x is not None and new_y is not None:
+                if new_x != self.currentPanelX or new_y != self.currentPanelY:
+                    print_debug("[MultiTextPanel] Panel position changed: [%d, %d] -> [%d, %d]" % 
+                               (self.currentPanelX, self.currentPanelY, new_x, new_y))
+                    
+                    new_x = max(0, min(new_x, 1920 - 165)) 
+                    new_y = max(0, min(new_y, 1080 - 120))  
+                    
+                    self.currentPanelX = new_x
+                    self.currentPanelY = new_y
+                    self.wasPositionEdited = True
+                    
+                    print_debug("[MultiTextPanel] Panel position updated and marked for saving")
+        except Exception as e:
+            print_error("[MultiTextPanel] Error in component update handler: %s" % str(e))
+
+    def persistParamsIfChanged(self):
+        """Зберегти параметри якщо вони змінилися"""
+        if self.wasPositionEdited:
+            try:
+                g_configParams.panelPosition.value = [self.currentPanelX, self.currentPanelY]
+                from .config import g_config
+                g_config.save_config()
+                
+                self.wasPositionEdited = False
+                print_debug("[MultiTextPanel] Panel position saved: [%d, %d]" % 
+                           (self.currentPanelX, self.currentPanelY))
+            except Exception as e:
+                print_error("[MultiTextPanel] Error saving panel position: %s" % str(e))
 
     def update_hotkeys(self):
         try:
@@ -368,64 +417,73 @@ class MultiTextPanel:
             for key in self.hot_keys:
                 if event.key == key and not self.active_keys.get(key, False):
                     self.active_keys[key] = True
-                    print_debug("[MultiTextPanel] Key down: %s" % getBigworldNameFromKey(key))
                     break
             
-            if self._allKeysPressed():
+            if all(self.active_keys.get(key, False) for key in self.hot_keys):
                 if not self.isKeyPressed:
                     self.isKeyPressed = True
                     self.set_component_visibility(True)
-                    print_debug("[MultiTextPanel] All keys pressed, showing components")
+                    print_debug("[MultiTextPanel] All hotkeys pressed, showing panel")
         except Exception as e:
-            print_error("[MultiTextPanel] Error in _onKeyDown: %s" % str(e))
+            print_error("[MultiTextPanel] Error in key down handler: %s" % str(e))
 
     def _onKeyUp(self, event):
         try:
             for key in self.hot_keys:
                 if event.key == key and self.active_keys.get(key, False):
                     self.active_keys[key] = False
-                    print_debug("[MultiTextPanel] Key up: %s" % getBigworldNameFromKey(key))
                     break
             
-            if not self._allKeysPressed():
+            if not any(self.active_keys.get(key, False) for key in self.hot_keys):
                 if self.isKeyPressed:
                     self.isKeyPressed = False
                     self.set_component_visibility(False)
-                    print_debug("[MultiTextPanel] Not all keys pressed, hiding components")
+                    print_debug("[MultiTextPanel] All hotkeys released, hiding panel")
         except Exception as e:
-            print_error("[MultiTextPanel] Error in _onKeyUp: %s" % str(e))
+            print_error("[MultiTextPanel] Error in key up handler: %s" % str(e))
 
-    def _allKeysPressed(self):
-        return all(self.active_keys.get(key, False) for key in self.hot_keys)
-
-    def set_component_visibility(self, visible):
+    def set_component_visibility(self, isVisible):
         try:
-            component_ids = ['eloInfoPanel.ratingsText'] 
+            print_debug("[MultiTextPanel] Setting component visibility: %s" % isVisible)
             
-            if g_configParams.showTitleVisible.value:
-                component_ids.append('eloInfoPanel.headerText')
-            if g_configParams.showTeamNames.value:
-                component_ids.append('eloInfoPanel.namesText')
-            if g_configParams.showEloChanges.value:
-                component_ids.append('eloInfoPanel.eloText')
-            if g_configParams.showWinrateAndBattles.value:
-                component_ids.append('eloInfoPanel.statsText')
+            component_ids = [
+                'eloInfoPanel.headerText',
+                'eloInfoPanel.alliesNameText',
+                'eloInfoPanel.enemiesNameText',
+                'eloInfoPanel.alliesRatingText',
+                'eloInfoPanel.enemiesRatingText',
+                'eloInfoPanel.eloPlusText',
+                'eloInfoPanel.eloMinusText',
+                'eloInfoPanel.statsText'
+            ]
             
             for component_id in component_ids:
                 if g_guiCache.isComponent(component_id):
-                    g_guiFlash.updateComponent(component_id, {'visible': visible})
+                    g_guiFlash.updateComponent(component_id, {'visible': isVisible})
             
-            print_debug("[MultiTextPanel] Component visibility set to: %s" % visible)
+            print_debug("[MultiTextPanel] Component visibility updated successfully")
         except Exception as e:
             print_error("[MultiTextPanel] Error setting component visibility: %s" % str(e))
 
-    def delete_all_component(self):
+    def delete_components(self):
         try:
+            print_debug("[MultiTextPanel] Deleting components")
+            self.persistParamsIfChanged()
+            
+            try:
+                COMPONENT_EVENT.UPDATED -= self._onComponentUpdated
+                print_debug("[MultiTextPanel] Unsubscribed from component update events")
+            except Exception as e:
+                print_error("[MultiTextPanel] Error unsubscribing from events: %s" % str(e))
+            
             component_ids = [
                 'eloInfoPanel.headerText',
-                'eloInfoPanel.namesText',
-                'eloInfoPanel.ratingsText',
-                'eloInfoPanel.eloText',
+                'eloInfoPanel.alliesNameText',
+                'eloInfoPanel.enemiesNameText', 
+                'eloInfoPanel.alliesRatingText',
+                'eloInfoPanel.enemiesRatingText',
+                'eloInfoPanel.eloPlusText',
+                'eloInfoPanel.eloMinusText',
                 'eloInfoPanel.statsText',
                 'eloInfoPanel'
             ]
@@ -439,14 +497,9 @@ class MultiTextPanel:
         except Exception as e:
             print_error("[MultiTextPanel] Error deleting components: %s" % str(e))
 
-    def update_panel_position(self, x, y):
-        try:
-            g_configParams.panelPosition.value = [x, y]
-            if g_guiCache.isComponent('eloInfoPanel'):
-                g_guiFlash.updateComponent('eloInfoPanel', {'x': x, 'y': y})
-                print_debug("[MultiTextPanel] Panel position updated to: %s, %s" % (x, y))
-        except Exception as e:
-            print_error("[MultiTextPanel] Error updating panel position: %s" % str(e))
+    def delete_all_component(self):
+        """Метод для сумісності з існуючим кодом"""
+        self.delete_components()
 
     def refresh_colors_and_effects(self):
         try:
@@ -455,9 +508,12 @@ class MultiTextPanel:
             shadow_config = self._getShadowConfig()
             component_ids = [
                 'eloInfoPanel.headerText',
-                'eloInfoPanel.namesText',
-                'eloInfoPanel.ratingsText',
-                'eloInfoPanel.eloText',
+                'eloInfoPanel.alliesNameText',
+                'eloInfoPanel.enemiesNameText',
+                'eloInfoPanel.alliesRatingText',
+                'eloInfoPanel.enemiesRatingText',
+                'eloInfoPanel.eloPlusText',
+                'eloInfoPanel.eloMinusText',
                 'eloInfoPanel.statsText'
             ]
             
@@ -475,9 +531,12 @@ class MultiTextPanel:
             
             component_ids = [
                 'eloInfoPanel.headerText',
-                'eloInfoPanel.namesText',
-                'eloInfoPanel.ratingsText',
-                'eloInfoPanel.eloText',
+                'eloInfoPanel.alliesNameText',
+                'eloInfoPanel.enemiesNameText',
+                'eloInfoPanel.alliesRatingText',
+                'eloInfoPanel.enemiesRatingText',
+                'eloInfoPanel.eloPlusText',
+                'eloInfoPanel.eloMinusText',
                 'eloInfoPanel.statsText'
             ]
             

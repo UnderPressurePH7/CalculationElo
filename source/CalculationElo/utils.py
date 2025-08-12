@@ -1,4 +1,4 @@
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 def print_log(log):
     print("[CalculationElo]: {}".format(str(log)))

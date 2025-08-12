@@ -129,7 +129,12 @@ class ArenaInfoProvider():
         self.team_info = {'allies': None, 'enemies': None, 'id_allies': None, 'id_enemies': None,
                           'allies_rating': None, 'enemies_rating': None,
                           'elo_plus': None, 'elo_minus': None, 'wins_percent': None, 'battles_count': None }
-        
+        try:
+            g_multiTextPanel.persistParamsIfChanged()
+            print_debug("[ArenaInfoProvider] Panel position saved during finalization")
+        except Exception as e:
+            print_error("[ArenaInfoProvider] Error saving panel position during fini: %s" % str(e))
+            
         try:
             g_multiTextPanel.delete_all_component()
             print_debug("[ArenaInfoProvider] Components deleted successfully")
@@ -188,6 +193,12 @@ class ArenaInfoProvider():
         
         try:
             arena = self.__arena
+
+            try:
+                g_multiTextPanel.persistParamsIfChanged()
+                print_debug("[ArenaInfoProvider] Panel position saved during finalization")
+            except Exception as e:
+                print_error("[ArenaInfoProvider] Error saving panel position during fini: %s" % str(e))
             
             g_multiTextPanel.stop_key_held(self.ON_HOTKEY_PRESSED)
             print_debug("[ArenaInfoProvider] Key handlers stopped")
@@ -244,6 +255,12 @@ class ArenaInfoProvider():
         print_debug("[ArenaInfoProvider] Finalizing...")
         
         try:
+            try:
+                g_multiTextPanel.persistParamsIfChanged()
+                print_debug("[ArenaInfoProvider] Panel position saved during finalization")
+            except Exception as e:
+                print_error("[ArenaInfoProvider] Error saving panel position during fini: %s" % str(e))
+
             g_playerEvents.onAvatarReady -= self.start
             g_playerEvents.onAvatarBecomeNonPlayer -= self.stop
             self.sessionProvider.onBattleSessionStart -= self.onBattleSessionStart

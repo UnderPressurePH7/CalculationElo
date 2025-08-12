@@ -44,7 +44,7 @@ class ConfigParams(object):
         )
         self.eloHotKey = HotKeyParam(['elo-hotkey'], defaultValue=[Keys.KEY_LALT])
 
-        self.panelPosition = ListParam(['panel-position'], defaultValue=[550, 50])
+        self.panelPosition = ListParam(['panel-position'], defaultValue=[560, 50])
         
         self.headerColor = ColorParam(['header-color'], defaultValue=[255, 255, 255])
         self.alliesNamesColor = ColorParam(['allies-names-color'], defaultValue=[79, 134, 39])
@@ -56,12 +56,11 @@ class ConfigParams(object):
         self.winrateColor = ColorParam(['winrate-color'], defaultValue=[255, 255, 0])
         self.battlesColor = ColorParam(['battles-color'], defaultValue=[255, 255, 255])
 
-        self.showTitleVisible = BooleanParam(['show-title-visible'], defaultValue=True)
+        self.showTitleVisible = BooleanParam(['show-title-visible'], defaultValue=False)
         self.showTeamNames = BooleanParam(['show-team-names'], defaultValue=True)
         self.showEloChanges = BooleanParam(['show-elo-changes'], defaultValue=True)
         self.showWinrateAndBattles = BooleanParam(['show-winrate-and-battles'], defaultValue=True)
         
-
         self.textShadowEnabled = BooleanParam(['text-shadow-enabled'], defaultValue=True)
         self.textShadowColor = ColorParam(['text-shadow-color'], defaultValue=[0, 0, 0])
         self.textShadowDistance = ListParam(['text-shadow-distance'], defaultValue=[1])
