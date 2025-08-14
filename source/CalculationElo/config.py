@@ -9,7 +9,7 @@ modLinkage = 'me.under-pressure.calculationelo'
 
 class Config(object):
     def __init__(self):
-        self.config_path = os.path.join('mods', 'configs', 'under_pressure', 'config.json')
+        self.config_path = os.path.join('mods', 'configs', 'under_pressure', 'calculationElo.json')
         self._ensure_config_exists()
         self.load_config()
         self._register_mod()
@@ -264,5 +264,6 @@ class Config(object):
             print_debug("MSA sync called - using config file values")
         except Exception as e:
             print_error("Error in MSA sync: %s" % str(e))
+
 
 g_config = Config()
