@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# ВИПРАВЛЕНА ВЕРСІЯ - повинна працювати коректно в усіх боях
 import BigWorld
 from PlayerEvents import g_playerEvents
 from helpers import dependency
@@ -97,9 +98,8 @@ class ArenaInfoProvider():
                         print_debug("[ArenaInfoProvider] Last 28 days - wins percent: %s, battles count: %s" % (self.team_info['wins_percent'], self.team_info['battles_count']))
                         
                         try:
-                            # ВИПРАВЛЕННЯ: Перевіряємо чи панель існує, а не конкретний компонент
-                            if g_guiCache.isComponent('eloInfoPanel'):
-                                print_debug("[ArenaInfoProvider] Panel exists, updating text fields")
+                            if g_guiCache.isComponent('eloInfoPanel.alliesRatingText'):
+                                print_debug("[ArenaInfoProvider] Updating existing text fields")
                                 g_multiTextPanel.update_text_fields(
                                     self.team_info['allies'], 
                                     self.team_info['enemies'], 
@@ -111,18 +111,7 @@ class ArenaInfoProvider():
                                     self.team_info['battles_count']
                                 )
                             else:
-                                print_debug("[ArenaInfoProvider] Panel not found, creating text fields")
-                                g_multiTextPanel.create_text_fields(
-                                    self.ON_HOTKEY_PRESSED,
-                                    self.team_info['allies'], 
-                                    self.team_info['enemies'], 
-                                    self.team_info['allies_rating'], 
-                                    self.team_info['enemies_rating'], 
-                                    self.team_info['elo_plus'], 
-                                    self.team_info['elo_minus'], 
-                                    self.team_info['wins_percent'], 
-                                    self.team_info['battles_count']
-                                )
+                                print_debug("[ArenaInfoProvider] Text fields not created yet")
                         except Exception as ex:
                             print_error("[ArenaInfoProvider] Error updating text fields: %s" % str(ex))
                     else:
@@ -141,12 +130,13 @@ class ArenaInfoProvider():
         self.team_info = {'allies': None, 'enemies': None, 'id_allies': None, 'id_enemies': None,
                           'allies_rating': None, 'enemies_rating': None,
                           'elo_plus': None, 'elo_minus': None, 'wins_percent': None, 'battles_count': None }
+        
         try:
             g_multiTextPanel.persistParamsIfChanged()
-            print_debug("[ArenaInfoProvider] Panel position saved during finalization")
+            print_debug("[ArenaInfoProvider] Panel position saved during stop")
         except Exception as e:
-            print_error("[ArenaInfoProvider] Error saving panel position during fini: %s" % str(e))
-            
+            print_error("[ArenaInfoProvider] Error saving panel position during stop: %s" % str(e))
+        
         try:
             g_multiTextPanel.delete_all_component()
             print_debug("[ArenaInfoProvider] Components deleted successfully")
@@ -175,8 +165,7 @@ class ArenaInfoProvider():
                 if self.__guiType in (15, 16):
                     print_debug("[ArenaInfoProvider] Valid GUI type, creating text fields...")
                     
-                    # ВИПРАВЛЕННЯ: Завжди створюємо поля, якщо панель існує
-                    if g_guiCache.isComponent('eloInfoPanel'):
+                    if not g_guiCache.isComponent('eloInfoPanel.alliesRatingText'):
                         print_debug("[ArenaInfoProvider] Creating text fields with visibility: %s" % self.ON_HOTKEY_PRESSED)
                         g_multiTextPanel.create_text_fields(
                             self.ON_HOTKEY_PRESSED, 
@@ -190,7 +179,7 @@ class ArenaInfoProvider():
                             self.team_info['battles_count']
                         )
                     else:
-                        print_debug("[ArenaInfoProvider] Panel not found in onBattleSessionStart")
+                        print_debug("[ArenaInfoProvider] Text fields already exist")
                 else:
                     print_debug("[ArenaInfoProvider] Invalid GUI type: %d" % self.__guiType)
             else:
@@ -206,12 +195,6 @@ class ArenaInfoProvider():
         
         try:
             arena = self.__arena
-
-            try:
-                g_multiTextPanel.persistParamsIfChanged()
-                print_debug("[ArenaInfoProvider] Panel position saved during finalization")
-            except Exception as e:
-                print_error("[ArenaInfoProvider] Error saving panel position during fini: %s" % str(e))
             
             g_multiTextPanel.stop_key_held(self.ON_HOTKEY_PRESSED)
             print_debug("[ArenaInfoProvider] Key handlers stopped")

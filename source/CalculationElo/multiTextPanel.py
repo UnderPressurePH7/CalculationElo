@@ -64,10 +64,6 @@ class MultiTextPanel:
         print_debug("[MultiTextPanel] Initialization complete")
 
     def _onComponentUpdated(self, alias, props):
-        """
-        Обробник події COMPONENT_EVENT.UPDATED від GUIFlash
-        Викликається коли будь-який компонент оновлюється (включаючи перетягування)
-        """
         try:
             if alias != 'eloInfoPanel':
                 return
@@ -92,7 +88,6 @@ class MultiTextPanel:
             print_error("[MultiTextPanel] Error in component update handler: %s" % str(e))
 
     def persistParamsIfChanged(self):
-        """Зберегти параметри якщо вони змінилися"""
         if self.wasPositionEdited:
             try:
                 g_configParams.panelPosition.value = [self.currentPanelX, self.currentPanelY]
@@ -498,7 +493,6 @@ class MultiTextPanel:
             print_error("[MultiTextPanel] Error deleting components: %s" % str(e))
 
     def delete_all_component(self):
-        """Метод для сумісності з існуючим кодом"""
         self.delete_components()
 
     def refresh_colors_and_effects(self):
