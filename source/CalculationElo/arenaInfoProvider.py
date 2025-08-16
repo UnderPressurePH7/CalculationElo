@@ -128,6 +128,7 @@ class ArenaInfoProvider():
                           'elo_plus': None, 'elo_minus': None, 'wins_percent': None, 'battles_count': None }
         
         try:
+            g_multiTextPanel.persistParamsIfChanged() 
             g_multiTextPanel.delete_all_component() 
             print_debug("[ArenaInfoProvider] Components hidden successfully")
         except Exception as ex:

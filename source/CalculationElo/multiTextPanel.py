@@ -94,8 +94,13 @@ class MultiTextPanel:
         if self.wasPositionEdited:
             try:
                 from .config import g_config
+                from .config_param import g_configParams
+                
+                g_configParams.panelPosition.value = [self.currentPanelX, self.currentPanelY]
+                
+                g_config.save_config()
                 self.wasPositionEdited = False
-                print_debug("[MultiTextPanel] Panel position saved")
+                print_debug("[MultiTextPanel] Panel position saved: [%d, %d]" % (self.currentPanelX, self.currentPanelY))
             except Exception as e:
                 print_error("[MultiTextPanel] Error saving panel position: %s" % str(e))
 
@@ -375,8 +380,8 @@ class MultiTextPanel:
             print_error("[MultiTextPanel] Error setting component visibility: %s" % str(e))
 
     def delete_all_component(self):
-        """ВИПРАВЛЕНО: НЕ видаляємо компоненти між боями, тільки при завершенні моду"""
         try:
+            self.persistParamsIfChanged()
             print_debug("[MultiTextPanel] Soft cleanup - keeping components but hiding them")
             self.set_component_visibility(False)
             
@@ -385,7 +390,6 @@ class MultiTextPanel:
             print_error("[MultiTextPanel] Error in soft cleanup: %s" % str(e))
 
     def force_cleanup(self):
-        """ВИПРАВЛЕНО: Повне видалення всіх компонентів при завершенні моду"""
         try:
             print_debug("[MultiTextPanel] Starting FULL cleanup...")
             
