@@ -20,8 +20,8 @@ class MultiTextPanel:
         self.active_keys = {}
         self.components_created = False  
         
-        self.currentPanelX = 560
-        self.currentPanelY = 50
+        self.currentPanelX = g_configParams.panelPosition.value[0]
+        self.currentPanelY = g_configParams.panelPosition.value[1]
         self.wasPositionEdited = False
         
         COMPONENT_EVENT.UPDATED += self._onComponentUpdated
