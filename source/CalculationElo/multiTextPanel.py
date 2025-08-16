@@ -18,9 +18,10 @@ class MultiTextPanel:
         print_debug("[MultiTextPanel] Initializing...")
         self.isKeyPressed = False
         self.active_keys = {}
+        self.components_created = False  
         
-        self.currentPanelX = g_configParams.panelPosition.value[0]
-        self.currentPanelY = g_configParams.panelPosition.value[1] 
+        self.currentPanelX = 560
+        self.currentPanelY = 50
         self.wasPositionEdited = False
         
         COMPONENT_EVENT.UPDATED += self._onComponentUpdated
@@ -37,6 +38,11 @@ class MultiTextPanel:
             print_error("[MultiTextPanel] Error loading hot keys: %s" % str(e))
             self.hot_keys = [Keys.KEY_LALT] 
 
+        self._ensure_main_panel()
+        
+        print_debug("[MultiTextPanel] Initialization complete")
+
+    def _ensure_main_panel(self):
         try:
             if not g_guiCache.isComponent('eloInfoPanel'): 
                 print_debug("[MultiTextPanel] Creating main panel component...")
@@ -54,14 +60,11 @@ class MultiTextPanel:
                     'visible': True
                 })
                 
-                print_debug("[MultiTextPanel] Main panel created successfully at position: [%d, %d]" % 
-                           (self.currentPanelX, self.currentPanelY))
+                print_debug("[MultiTextPanel] Main panel created successfully")
             else:
                 print_debug("[MultiTextPanel] Main panel already exists")
         except Exception as e:
             print_error("[MultiTextPanel] Error creating main panel: %s" % str(e))
-        
-        print_debug("[MultiTextPanel] Initialization complete")
 
     def _onComponentUpdated(self, alias, props):
         try:
@@ -83,66 +86,81 @@ class MultiTextPanel:
                     self.currentPanelY = new_y
                     self.wasPositionEdited = True
                     
-                    print_debug("[MultiTextPanel] Panel position updated and marked for saving")
+                    print_debug("[MultiTextPanel] Panel position updated")
         except Exception as e:
             print_error("[MultiTextPanel] Error in component update handler: %s" % str(e))
 
     def persistParamsIfChanged(self):
         if self.wasPositionEdited:
             try:
-                g_configParams.panelPosition.value = [self.currentPanelX, self.currentPanelY]
                 from .config import g_config
-                g_config.save_config()
-                
                 self.wasPositionEdited = False
-                print_debug("[MultiTextPanel] Panel position saved: [%d, %d]" % 
-                           (self.currentPanelX, self.currentPanelY))
+                print_debug("[MultiTextPanel] Panel position saved")
             except Exception as e:
                 print_error("[MultiTextPanel] Error saving panel position: %s" % str(e))
 
-    def update_hotkeys(self):
-        try:
-            old_keys = self.hot_keys
-            new_keys = g_configParams.eloHotKey.value
-            
-            if new_keys and all(key > 0 for key in new_keys):
-                self.hot_keys = new_keys
-                if old_keys != self.hot_keys:
-                    print_debug("[MultiTextPanel] Hot keys updated: %s -> %s" % (str(old_keys), str(self.hot_keys)))
-            else:
-                print_debug("[MultiTextPanel] Invalid new keys: %s, keeping old: %s" % (str(new_keys), str(old_keys)))
-        except Exception as e:
-            print_error("[MultiTextPanel] Error updating hot keys: %s" % str(e))
+    def _getShadowConfig(self):
+        return {
+            'distance': 1,
+            'angle': 45,
+            'color': 0x000000,
+            'alpha': 0.5,
+            'blurX': 2,
+            'blurY': 2,
+            'strength': 1,
+            'quality': 1
+        }
 
     def create_text_fields(self, isVisible, allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count):
         try:
             print_debug("[MultiTextPanel] Creating text fields with visibility: %s" % isVisible)
             
-            current_y = 5
+            self._ensure_main_panel()
 
-            if g_configParams.showTitleVisible.value:
-                header_component_id = 'eloInfoPanel.headerText'
-                header_color = g_configParams.headerColor.getHexColor()
-                header_text = '<font face="Tahoma" size="14" color="{0}"><b>-=Calculation Elo=-</b></font>'.format(header_color)
+            if not self.components_created:
+                print_debug("[MultiTextPanel] Creating components for the first time")
                 
-                g_guiFlash.createComponent(header_component_id, COMPONENT_TYPE.LABEL, {
-                    'text': header_text,
-                    'x': 0,
-                    'y': current_y,
-                    'alignX': COMPONENT_ALIGN.CENTER,
-                    'isHtml': True,
-                    'visible': isVisible,
-                    'shadow': self._getShadowConfig()
-                })
-                current_y += 20
-            
-            if g_configParams.showTeamNames.value:
-                # Allies name
-                allies_name_color = g_configParams.alliesNamesColor.getHexColor()
-                allies_short = (allies[:5].upper() if allies else "N/A")
-                g_guiFlash.createComponent('eloInfoPanel.alliesNameText', COMPONENT_TYPE.LABEL, {
-                    'text': '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font>'.format(allies_name_color, allies_short),
-                    'x': 1,
+                current_y = 5
+                if g_configParams.showTitleVisible.value:
+                    header_text = '<font face="Tahoma" size="14" color="#FFFFFF"><b>-=Calculation Elo=-</b></font>'
+                    
+                    g_guiFlash.createComponent('eloInfoPanel.headerText', COMPONENT_TYPE.LABEL, {
+                        'text': header_text,
+                        'x': 0,
+                        'y': current_y,
+                        'alignX': COMPONENT_ALIGN.CENTER,
+                        'isHtml': True,
+                        'visible': isVisible,
+                        'shadow': self._getShadowConfig()
+                    })
+                    current_y += 20
+
+                if g_configParams.showTeamNames.value:
+                    g_guiFlash.createComponent('eloInfoPanel.alliesNameText', COMPONENT_TYPE.LABEL, {
+                        'text': '<font face="Tahoma" size="18" color="#4F8627"><b>ALLY</b></font>',
+                        'x': 1,
+                        'y': current_y,
+                        'alignX': COMPONENT_ALIGN.LEFT,
+                        'isHtml': True,
+                        'visible': isVisible,
+                        'shadow': self._getShadowConfig()
+                    })
+
+                    g_guiFlash.createComponent('eloInfoPanel.enemiesNameText', COMPONENT_TYPE.LABEL, {
+                        'text': '<font face="Tahoma" size="18" color="#9A0101"><b>ENEM</b></font>',
+                        'x': -1,
+                        'y': current_y,
+                        'alignX': COMPONENT_ALIGN.RIGHT,
+                        'isHtml': True,
+                        'visible': isVisible,
+                        'shadow': self._getShadowConfig()
+                    })
+                    current_y += 20
+
+
+                g_guiFlash.createComponent('eloInfoPanel.alliesRatingText', COMPONENT_TYPE.LABEL, {
+                    'text': '<font face="Tahoma" size="18" color="#4F8627"><b>0000</b></font>',
+                    'x': 15,
                     'y': current_y,
                     'alignX': COMPONENT_ALIGN.LEFT,
                     'isHtml': True,
@@ -150,108 +168,56 @@ class MultiTextPanel:
                     'shadow': self._getShadowConfig()
                 })
 
-                # Enemies name
-                enemies_name_color = g_configParams.enemiesNamesColor.getHexColor()
-                enemies_short = (enemies[:5].upper() if enemies else "N/A")
-                g_guiFlash.createComponent('eloInfoPanel.enemiesNameText', COMPONENT_TYPE.LABEL, {
-                    'text': '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font>'.format(enemies_name_color, enemies_short),
-                    'x': -1,
+                g_guiFlash.createComponent('eloInfoPanel.enemiesRatingText', COMPONENT_TYPE.LABEL, {
+                    'text': '<font face="Tahoma" size="18" color="#9A0101"><b>0000</b></font>',
+                    'x': -15,
                     'y': current_y,
                     'alignX': COMPONENT_ALIGN.RIGHT,
                     'isHtml': True,
                     'visible': isVisible,
                     'shadow': self._getShadowConfig()
                 })
-                current_y += 20
+                current_y += 21
 
-            # Ratings
-            allies_rating_color = g_configParams.alliesRatingColor.getHexColor()
-            allies_rating_str = str(allies_rating).zfill(4) if allies_rating else "0000"
-            g_guiFlash.createComponent('eloInfoPanel.alliesRatingText', COMPONENT_TYPE.LABEL, {
-                'text': '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font>'.format(allies_rating_color, allies_rating_str),
-                'x': 15,
-                'y': current_y,
-                'alignX': COMPONENT_ALIGN.LEFT,
-                'isHtml': True,
-                'visible': isVisible,
-                'shadow': self._getShadowConfig()
-            })
+                if g_configParams.showEloChanges.value:
+                    g_guiFlash.createComponent('eloInfoPanel.eloPlusText', COMPONENT_TYPE.LABEL, {
+                        'text': '<font face="Tahoma" size="14" color="#00FF00"><b>+0</b></font>',
+                        'x': 30,
+                        'y': current_y,
+                        'alignX': COMPONENT_ALIGN.LEFT,
+                        'isHtml': True,
+                        'visible': isVisible,
+                        'shadow': self._getShadowConfig()
+                    })
 
-            enemies_rating_color = g_configParams.enemiesRatingColor.getHexColor()
-            enemies_rating_str = str(enemies_rating).zfill(4) if enemies_rating else "0000"
-            g_guiFlash.createComponent('eloInfoPanel.enemiesRatingText', COMPONENT_TYPE.LABEL, {
-                'text': '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font>'.format(enemies_rating_color, enemies_rating_str),
-                'x': -15,
-                'y': current_y,
-                'alignX': COMPONENT_ALIGN.RIGHT,
-                'isHtml': True,
-                'visible': isVisible,
-                'shadow': self._getShadowConfig()
-            })
-            current_y += 21
+                    g_guiFlash.createComponent('eloInfoPanel.eloMinusText', COMPONENT_TYPE.LABEL, {
+                        'text': '<font face="Tahoma" size="14" color="#FF0000"><b>-0</b></font>',
+                        'x': -30,
+                        'y': current_y,
+                        'alignX': COMPONENT_ALIGN.RIGHT,
+                        'isHtml': True,
+                        'visible': isVisible,
+                        'shadow': self._getShadowConfig()
+                    })
+                    current_y += 17
 
-            if g_configParams.showEloChanges.value:
-                elo_gain_color = g_configParams.eloGainColor.getHexColor()
-                elo_plus_str = "+{}".format(eloPlus) if eloPlus else "+0"
-                g_guiFlash.createComponent('eloInfoPanel.eloPlusText', COMPONENT_TYPE.LABEL, {
-                    'text': '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font>'.format(elo_gain_color, elo_plus_str),
-                    'x': 30,
-                    'y': current_y,
-                    'alignX': COMPONENT_ALIGN.LEFT,
-                    'isHtml': True,
-                    'visible': isVisible,
-                    'shadow': self._getShadowConfig()
-                })
+                if g_configParams.showWinrateAndBattles.value:
+                    stats_text = '<font face="Tahoma" size="14" color="#FFFFFF"><b>0 (0%)</b></font>'
+                    
+                    g_guiFlash.createComponent('eloInfoPanel.statsText', COMPONENT_TYPE.LABEL, {
+                        'text': stats_text,
+                        'x': 0,
+                        'y': current_y,
+                        'alignX': COMPONENT_ALIGN.CENTER,
+                        'isHtml': True,
+                        'visible': isVisible,
+                        'shadow': self._getShadowConfig()
+                    })
 
-                elo_loss_color = g_configParams.eloLossColor.getHexColor()
-                elo_minus_str = "-{}".format(abs(eloMinus)) if eloMinus else "-0"
-                g_guiFlash.createComponent('eloInfoPanel.eloMinusText', COMPONENT_TYPE.LABEL, {
-                    'text': '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font>'.format(elo_loss_color, elo_minus_str),
-                    'x': -30,
-                    'y': current_y,
-                    'alignX': COMPONENT_ALIGN.RIGHT,
-                    'isHtml': True,
-                    'visible': isVisible,
-                    'shadow': self._getShadowConfig()
-                })
-                current_y += 17
-
-            if g_configParams.showWinrateAndBattles.value:
-                stats_component_id = 'eloInfoPanel.statsText'
-                winrate_color = g_configParams.winrateColor.getHexColor()
-                battles_color = g_configParams.battlesColor.getHexColor()
-                
-                winrate_str = "{}%".format(wins_percent) if wins_percent else "0%"
-                battles_str = str(battles_count) if battles_count else "0"
-                
-                stats_text ='<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font><font face="Tahoma" size="14" color="{2}"><b>({3})</b></font>'.format(
-                     battles_color, battles_str, winrate_color, winrate_str
-                )
-                
-                g_guiFlash.createComponent(stats_component_id, COMPONENT_TYPE.LABEL, {
-                    'text': stats_text,
-                    'x': 0,
-                    'y': current_y,
-                    'alignX': COMPONENT_ALIGN.CENTER,
-                    'isHtml': True,
-                    'visible': isVisible,
-                    'shadow': self._getShadowConfig()
-                })
+                self.components_created = True
+                print_debug("[MultiTextPanel] All components created successfully")
+            self.update_text_fields(allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count)
             
-            visible_elements = 1  
-            if g_configParams.showTitleVisible.value:
-                visible_elements += 1
-            if g_configParams.showTeamNames.value:
-                visible_elements += 1
-            if g_configParams.showEloChanges.value:
-                visible_elements += 1
-            if g_configParams.showWinrateAndBattles.value:
-                visible_elements += 1
-                
-            panel_height = 20 + (visible_elements * 25)
-            g_guiFlash.updateComponent('eloInfoPanel', {'height': panel_height})
-            
-            print_debug("[MultiTextPanel] Text fields created successfully")
         except Exception as e:
             print_error("[MultiTextPanel] Error creating text fields: %s" % str(e))
 
@@ -259,139 +225,87 @@ class MultiTextPanel:
         try:
             print_debug("[MultiTextPanel] Updating text fields")
             
-            if g_configParams.showTitleVisible.value:
-                header_component_id = 'eloInfoPanel.headerText'
-                header_color = g_configParams.headerColor.getHexColor()
-                header_text = '<font face="Tahoma" size="14" color="{0}"><b>-=Calculation Elo=-</b></font>'.format(header_color)
-                
-                if g_guiCache.isComponent(header_component_id):
-                    g_guiFlash.updateComponent(header_component_id, {
-                        'text': header_text,
-                        'shadow': self._getShadowConfig()
-                    })
+            if not self.components_created:
+                print_debug("[MultiTextPanel] Components not created yet, skipping update")
+                return
+
+            if g_configParams.showTitleVisible.value and g_guiCache.isComponent('eloInfoPanel.headerText'):
+                header_text = '<font face="Tahoma" size="14" color="#FFFFFF"><b>-=Calculation Elo=-</b></font>'
+                g_guiFlash.updateComponent('eloInfoPanel.headerText', {
+                    'text': header_text,
+                    'shadow': self._getShadowConfig()
+                })
 
             if g_configParams.showTeamNames.value:
-                allies_name_color = g_configParams.alliesNamesColor.getHexColor()
-                allies_short = (allies[:5].upper() if allies else "N/A")
+                allies_short = (allies[:4].upper() if allies else "ALLY")
                 if g_guiCache.isComponent('eloInfoPanel.alliesNameText'):
+                    allies_name_text = '<font face="Tahoma" size="18" color="#4F8627"><b>{0}</b></font>'.format(allies_short)
                     g_guiFlash.updateComponent('eloInfoPanel.alliesNameText', {
-                        'text': '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font>'.format(allies_name_color, allies_short),
+                        'text': allies_name_text,
                         'shadow': self._getShadowConfig()
                     })
 
-                enemies_name_color = g_configParams.enemiesNamesColor.getHexColor()
-                enemies_short = (enemies[:5].upper() if enemies else "N/A")
+                enemies_short = (enemies[:4].upper() if enemies else "ENEM")
                 if g_guiCache.isComponent('eloInfoPanel.enemiesNameText'):
+                    enemies_name_text = '<font face="Tahoma" size="18" color="#9A0101"><b>{0}</b></font>'.format(enemies_short)
                     g_guiFlash.updateComponent('eloInfoPanel.enemiesNameText', {
-                        'text': '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font>'.format(enemies_name_color, enemies_short),
+                        'text': enemies_name_text,
                         'shadow': self._getShadowConfig()
                     })
 
-            allies_rating_color = g_configParams.alliesRatingColor.getHexColor()
             allies_rating_str = str(allies_rating).zfill(4) if allies_rating else "0000"
             if g_guiCache.isComponent('eloInfoPanel.alliesRatingText'):
+                allies_rating_text = '<font face="Tahoma" size="18" color="#4F8627"><b>{0}</b></font>'.format(allies_rating_str)
                 g_guiFlash.updateComponent('eloInfoPanel.alliesRatingText', {
-                    'text': '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font>'.format(allies_rating_color, allies_rating_str),
+                    'text': allies_rating_text,
                     'shadow': self._getShadowConfig()
                 })
 
-            enemies_rating_color = g_configParams.enemiesRatingColor.getHexColor()
             enemies_rating_str = str(enemies_rating).zfill(4) if enemies_rating else "0000"
             if g_guiCache.isComponent('eloInfoPanel.enemiesRatingText'):
+                enemies_rating_text = '<font face="Tahoma" size="18" color="#9A0101"><b>{0}</b></font>'.format(enemies_rating_str)
                 g_guiFlash.updateComponent('eloInfoPanel.enemiesRatingText', {
-                    'text': '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font>'.format(enemies_rating_color, enemies_rating_str),
+                    'text': enemies_rating_text,
                     'shadow': self._getShadowConfig()
                 })
 
             if g_configParams.showEloChanges.value:
-                elo_gain_color = g_configParams.eloGainColor.getHexColor()
                 elo_plus_str = "+{}".format(eloPlus) if eloPlus else "+0"
                 if g_guiCache.isComponent('eloInfoPanel.eloPlusText'):
+                    elo_plus_text = '<font face="Tahoma" size="14" color="#00FF00"><b>{0}</b></font>'.format(elo_plus_str)
                     g_guiFlash.updateComponent('eloInfoPanel.eloPlusText', {
-                        'text': '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font>'.format(elo_gain_color, elo_plus_str),
+                        'text': elo_plus_text,
                         'shadow': self._getShadowConfig()
                     })
 
-                elo_loss_color = g_configParams.eloLossColor.getHexColor()
-                elo_minus_str = "-{}".format(abs(eloMinus)) if eloMinus else "-0"
+                elo_minus_str = "{}".format(eloMinus) if eloMinus else "-0"
                 if g_guiCache.isComponent('eloInfoPanel.eloMinusText'):
+                    elo_minus_text = '<font face="Tahoma" size="14" color="#FF0000"><b>{0}</b></font>'.format(elo_minus_str)
                     g_guiFlash.updateComponent('eloInfoPanel.eloMinusText', {
-                        'text': '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font>'.format(elo_loss_color, elo_minus_str),
+                        'text': elo_minus_text,
                         'shadow': self._getShadowConfig()
                     })
 
-            if g_configParams.showWinrateAndBattles.value:
-                stats_component_id = 'eloInfoPanel.statsText'
-                winrate_color = g_configParams.winrateColor.getHexColor()
-                battles_color = g_configParams.battlesColor.getHexColor()
-                
-                winrate_str = "{}%".format(wins_percent) if wins_percent else "0%"
+            if g_configParams.showWinrateAndBattles.value and g_guiCache.isComponent('eloInfoPanel.statsText'):
                 battles_str = str(battles_count) if battles_count else "0"
+                winrate_str = "{}%".format(wins_percent) if wins_percent else "0%"
+                stats_text = '<font face="Tahoma" size="14" color="#FFFFFF"><b>{0} ({1})</b></font>'.format(battles_str, winrate_str)
                 
-                stats_text ='<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font><font face="Tahoma" size="14" color="{2}"><b> ({3})</b></font>'.format(
-                    battles_color, battles_str, winrate_color, winrate_str
-                )
-                
-                if g_guiCache.isComponent(stats_component_id):
-                    g_guiFlash.updateComponent(stats_component_id, {
-                        'text': stats_text,
-                        'shadow': self._getShadowConfig()
-                    })
-            
-            visible_elements = 1  
-            if g_configParams.showTitleVisible.value:
-                visible_elements += 1
-            if g_configParams.showTeamNames.value:
-                visible_elements += 1
-            if g_configParams.showEloChanges.value:
-                visible_elements += 1
-            if g_configParams.showWinrateAndBattles.value:
-                visible_elements += 1
-                
-            panel_height = 20 + (visible_elements * 25)
-            if g_guiCache.isComponent('eloInfoPanel'):
-                g_guiFlash.updateComponent('eloInfoPanel', {'height': panel_height})
+                g_guiFlash.updateComponent('eloInfoPanel.statsText', {
+                    'text': stats_text,
+                    'shadow': self._getShadowConfig()
+                })
             
             print_debug("[MultiTextPanel] Text fields updated successfully")
+            
         except Exception as e:
             print_error("[MultiTextPanel] Error updating text fields: %s" % str(e))
 
-    def _getShadowConfig(self):
+    def start_key_held(self, elo_visible):
         try:
-            if not g_configParams.textShadowEnabled.value:
-                return None
-                
-            shadow_color = g_configParams.textShadowColor.value
-            shadow_color_int = (shadow_color[0] << 16) | (shadow_color[1] << 8) | shadow_color[2]
-            
-            distance_val = g_configParams.textShadowDistance.value
-            distance = distance_val[0] if isinstance(distance_val, list) and len(distance_val) > 0 else distance_val
-            
-            alpha_val = g_configParams.textShadowAlpha.value
-            alpha = alpha_val[0] if isinstance(alpha_val, list) and len(alpha_val) > 0 else alpha_val
-            
-            blur_val = g_configParams.textShadowBlur.value
-            blur = blur_val[0] if isinstance(blur_val, list) and len(blur_val) > 0 else blur_val
-            
-            return {
-                'distance': distance,
-                'angle': 45,
-                'color': shadow_color_int,
-                'alpha': alpha,
-                'blurX': blur,
-                'blurY': blur,
-                'strength': 1,
-                'quality': 1
-            }
-        except Exception as e:
-            print_error("[MultiTextPanel] Error creating shadow config: %s" % str(e))
-            return None
-
-    def start_key_held(self, isVisible):
-        try:
-            print_debug("[MultiTextPanel] Setting visibility: %s" % isVisible)
-            self.set_component_visibility(isVisible)
-            if not isVisible:
+            print_debug("[MultiTextPanel] Setting visibility: %s" % elo_visible)
+            self.set_component_visibility(elo_visible)
+            if not elo_visible:
                 InputHandler.g_instance.onKeyDown += self._onKeyDown
                 InputHandler.g_instance.onKeyUp += self._onKeyUp
                 print_debug("[MultiTextPanel] Key handlers registered")
@@ -444,7 +358,7 @@ class MultiTextPanel:
             component_ids = [
                 'eloInfoPanel.headerText',
                 'eloInfoPanel.alliesNameText',
-                'eloInfoPanel.enemiesNameText',
+                'eloInfoPanel.enemiesNameText', 
                 'eloInfoPanel.alliesRatingText',
                 'eloInfoPanel.enemiesRatingText',
                 'eloInfoPanel.eloPlusText',
@@ -460,16 +374,39 @@ class MultiTextPanel:
         except Exception as e:
             print_error("[MultiTextPanel] Error setting component visibility: %s" % str(e))
 
-    def delete_components(self):
+    def delete_all_component(self):
+        """ВИПРАВЛЕНО: НЕ видаляємо компоненти між боями, тільки при завершенні моду"""
         try:
-            print_debug("[MultiTextPanel] Deleting components")
+            print_debug("[MultiTextPanel] Soft cleanup - keeping components but hiding them")
+            self.set_component_visibility(False)
+            
+            print_debug("[MultiTextPanel] Soft cleanup completed")
+        except Exception as e:
+            print_error("[MultiTextPanel] Error in soft cleanup: %s" % str(e))
+
+    def force_cleanup(self):
+        """ВИПРАВЛЕНО: Повне видалення всіх компонентів при завершенні моду"""
+        try:
+            print_debug("[MultiTextPanel] Starting FULL cleanup...")
+            
+            try:
+                InputHandler.g_instance.onKeyDown -= self._onKeyDown
+                InputHandler.g_instance.onKeyUp -= self._onKeyUp
+                print_debug("[MultiTextPanel] Key handlers force unregistered")
+            except Exception as e:
+                print_debug("[MultiTextPanel] Key handlers already unregistered: %s" % str(e))
+            
             self.persistParamsIfChanged()
             
             try:
                 COMPONENT_EVENT.UPDATED -= self._onComponentUpdated
-                print_debug("[MultiTextPanel] Unsubscribed from component update events")
+                print_debug("[MultiTextPanel] Component event handlers unregistered")
             except Exception as e:
-                print_error("[MultiTextPanel] Error unsubscribing from events: %s" % str(e))
+                print_debug("[MultiTextPanel] Component event handlers already unregistered: %s" % str(e))
+
+            self.isKeyPressed = False
+            self.active_keys = {}
+            self.components_created = False  
             
             component_ids = [
                 'eloInfoPanel.headerText',
@@ -480,82 +417,18 @@ class MultiTextPanel:
                 'eloInfoPanel.eloPlusText',
                 'eloInfoPanel.eloMinusText',
                 'eloInfoPanel.statsText',
-                'eloInfoPanel'
+                'eloInfoPanel' 
             ]
             
             for component_id in component_ids:
-                if g_guiCache.isComponent(component_id):
-                    g_guiFlash.deleteComponent(component_id)
-                    print_debug("[MultiTextPanel] Deleted component: %s" % component_id)
+                try:
+                    if g_guiCache.isComponent(component_id):
+                        g_guiFlash.deleteComponent(component_id)
+                        print_debug("[MultiTextPanel] Force deleted component: %s" % component_id)
+                except Exception as e:
+                    print_debug("[MultiTextPanel] Could not delete component %s: %s" % (component_id, str(e)))
             
-            print_debug("[MultiTextPanel] All components deleted successfully")
+            print_debug("[MultiTextPanel] FULL cleanup completed")
+            
         except Exception as e:
-            print_error("[MultiTextPanel] Error deleting components: %s" % str(e))
-
-    def delete_all_component(self):
-        self.delete_components()
-
-    def refresh_colors_and_effects(self):
-        try:
-            print_debug("[MultiTextPanel] Refreshing colors and effects")
-            
-            shadow_config = self._getShadowConfig()
-            component_ids = [
-                'eloInfoPanel.headerText',
-                'eloInfoPanel.alliesNameText',
-                'eloInfoPanel.enemiesNameText',
-                'eloInfoPanel.alliesRatingText',
-                'eloInfoPanel.enemiesRatingText',
-                'eloInfoPanel.eloPlusText',
-                'eloInfoPanel.eloMinusText',
-                'eloInfoPanel.statsText'
-            ]
-            
-            for component_id in component_ids:
-                if g_guiCache.isComponent(component_id):
-                    g_guiFlash.updateComponent(component_id, {'shadow': shadow_config})
-            
-            print_debug("[MultiTextPanel] Colors and effects refreshed successfully")
-        except Exception as e:
-            print_error("[MultiTextPanel] Error refreshing colors and effects: %s" % str(e))
-
-    def recreate_components_with_visibility_changes(self):
-        try:
-            print_debug("[MultiTextPanel] Recreating components due to visibility changes")
-            
-            component_ids = [
-                'eloInfoPanel.headerText',
-                'eloInfoPanel.alliesNameText',
-                'eloInfoPanel.enemiesNameText',
-                'eloInfoPanel.alliesRatingText',
-                'eloInfoPanel.enemiesRatingText',
-                'eloInfoPanel.eloPlusText',
-                'eloInfoPanel.eloMinusText',
-                'eloInfoPanel.statsText'
-            ]
-            
-            for component_id in component_ids:
-                if g_guiCache.isComponent(component_id):
-                    g_guiFlash.deleteComponent(component_id)
-            
-            from . import g_arenaInfoProvider
-            if g_arenaInfoProvider and g_arenaInfoProvider.team_info:
-                print_debug("[MultiTextPanel] Recreating components with current team info")
-                display_mode = g_configParams.displayMode.value
-                is_visible = (display_mode == "always")
-                
-                self.create_text_fields(
-                    is_visible,
-                    g_arenaInfoProvider.team_info.get('allies'),
-                    g_arenaInfoProvider.team_info.get('enemies'),
-                    g_arenaInfoProvider.team_info.get('allies_rating'),
-                    g_arenaInfoProvider.team_info.get('enemies_rating'),
-                    g_arenaInfoProvider.team_info.get('elo_plus'),
-                    g_arenaInfoProvider.team_info.get('elo_minus'),
-                    g_arenaInfoProvider.team_info.get('wins_percent'),
-                    g_arenaInfoProvider.team_info.get('battles_count')
-                )
-            
-            print_debug("[MultiTextPanel] Component recreation completed")
-        except Exception as e:
-            print_error("[MultiTextPanel] Error recreating components: %s" % str(e))
+            print_error("[MultiTextPanel] Error in force cleanup: %s" % str(e))
