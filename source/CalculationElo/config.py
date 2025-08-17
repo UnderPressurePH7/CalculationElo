@@ -179,12 +179,12 @@ class Config(object):
                         'varName': 'record-avg-team-wn8',
                         'tooltip': u'{HEADER}Записувати історію середнього Wn8{/HEADER}{BODY}Записувати історію середнього Wn8 ворожої команди{/BODY}'
                     },
-                    {
-                        'type': 'Button',
-                        'text': u'Очистити історію WN8',
-                        'varName': 'clear-wn8-history',
-                        'tooltip': u'{HEADER}Очистити історію WN8{/HEADER}{BODY}Видалити файл з історією записів середнього WN8 ворожої команди. Ця дія незворотна!{/BODY}'
-                    },
+                    # {
+                    #     'type': 'Button',
+                    #     'text': u'Очистити історію WN8',
+                    #     'varName': 'clear-wn8-history',
+                    #     'tooltip': u'{HEADER}Очистити історію WN8{/HEADER}{BODY}Видалити файл з історією записів середнього WN8 ворожої команди. Ця дія незворотна!{/BODY}'
+                    # },
                     {
                         'type': 'Label',
                         'text': u'Інформація про файл історії середнього WN8',
@@ -286,16 +286,15 @@ class Config(object):
             print_debug("MSA settings changed: %s" % str(newSettings))
 
             for tokenName, value in newSettings.items():
-                if tokenName == "clear-wn8-history":
-                    print_debug("Clear WN8 history button pressed")
-                    success = self.clear_wn8_history_btn()
-                    if success:
-                        print_debug("WN8 history cleared successfully via settings")
-                    else:
-                        print_error("Failed to clear WN8 history via settings")
-                    return
+                # if tokenName == "clear-wn8-history":
+                #     print_debug("Clear WN8 history button pressed")
+                #     success = self.clear_wn8_history_btn()
+                #     if success:
+                #         print_debug("WN8 history cleared successfully via settings")
+                #     else:
+                #         print_error("Failed to clear WN8 history via settings")
+                #     continue
 
-            for tokenName, value in newSettings.items():
                 if tokenName in g_configParams.items():
                     param = g_configParams.items()[tokenName]
                     if hasattr(param, 'fromMsaValue'):

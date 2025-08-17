@@ -31,6 +31,26 @@ class HotKeyParam(object):
         else:
             self.value = [value]
 
+# class ButtonParam(object):
+#     def __init__(self, path):
+#         self.path = path
+#         self.tokenName = "-".join(path)
+#         self.value = None 
+#         self.defaultValue = None
+#         PARAM_REGISTRY[self.tokenName] = self
+
+#     @property
+#     def defaultMsaValue(self):
+#         return None
+
+#     @property
+#     def msaValue(self):
+#         return None
+
+#     @msaValue.setter
+#     def msaValue(self, value):
+#         self.value = []
+
 class ConfigParams(object):
     def __init__(self):
         self.enabled = BooleanParam(['enabled'], defaultValue=True)
@@ -63,6 +83,8 @@ class ConfigParams(object):
         self.showWinrateAndBattles = BooleanParam(['show-winrate-and-battles'], defaultValue=True)
         self.showAvgTeamWn8 = BooleanParam(['show-avg-team-wn8'], defaultValue=False)
         self.recordAvgTeamWn8 = BooleanParam(['record-avg-team-wn8'], defaultValue=False)
+        # self.clearWn8History = ButtonParam(['clear-wn8-history'])
+
 
         self.textShadowEnabled = BooleanParam(['text-shadow-enabled'], defaultValue=True)
         self.textShadowColor = ColorParam(['text-shadow-color'], defaultValue=[0, 0, 0])
