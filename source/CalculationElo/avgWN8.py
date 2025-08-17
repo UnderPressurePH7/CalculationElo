@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import codecs
 from .utils import *
 from .config_param import g_configParams
 
@@ -71,16 +72,29 @@ class AvgWN8:
             
             from datetime import datetime
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
-            history_entry = "[{}] Avg Team WN8: {} |\n".format(
+
+            history_entry = "[{}] Avg Enemy WN8: {} |\n".format(
                 timestamp,
                 int(avg_wn8)
             )
-
-            with open(self.history_wn8_path, 'a', encoding='utf-8') as f:
+            with codecs.open(self.history_wn8_path, 'a', encoding='utf-8') as f:
                 f.write(history_entry)
 
-            print_debug("Team WN8 history saved to: {}".format(self.history_wn8_path))
+            print_debug("Enemy Team WN8 history saved to: {}".format(self.history_wn8_path))
 
         except Exception as e:
             print_error("Error saving WN8 history: {}".format(str(e)))
+
+    def clear_wn8_history(self):
+        try:
+            if os.path.exists(self.history_wn8_path):
+                os.remove(self.history_wn8_path)
+                print_log("WN8 history file cleared successfully")
+                return True
+            else:
+                print_debug("WN8 history file does not exist")
+                return True
+                
+        except Exception as e:
+            print_error("Error clearing WN8 history: %s" % str(e))
+            return False

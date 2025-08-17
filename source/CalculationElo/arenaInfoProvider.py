@@ -44,6 +44,7 @@ class ArenaInfoProvider():
     def start(self, *a, **k):
         print_debug("[ArenaInfoProvider] Starting...")
         
+        self.account_ids = []
         self.team_info = {'allies': None, 'enemies': None, 'id_allies': None, 'id_enemies': None,
                       'allies_rating': None, 'enemies_rating': None,
                       'elo_plus': None, 'elo_minus': None, 'wins_percent': None, 'battles_count': None,

@@ -4,6 +4,7 @@ import os
 from gui.modsSettingsApi import g_modsSettingsApi
 from .utils import print_log, print_error, print_debug
 from .config_param import g_configParams
+from . import g_avgWN8
 
 modLinkage = 'me.under-pressure.calculationelo'
 
@@ -149,12 +150,25 @@ class Config(object):
                         'varName': 'show-avg-team-wn8',
                         'tooltip': u'{HEADER}Показувати середній Wn8{/HEADER}{BODY}Показувати середній Wn8 ворожої команди{/BODY}'
                     },
-                                        {
+                    {
                         'type': 'CheckBox',
                         'text': u'Записувати історію Wn8',
                         'value': g_configParams.recordAvgTeamWn8.defaultMsaValue,
                         'varName': 'record-avg-team-wn8',
                         'tooltip': u'{HEADER}Записувати історію середнього Wn8{/HEADER}{BODY}Записувати історію середнього Wn8 ворожої команди{/BODY}'
+                    },
+                    {
+                        'type': 'CheckBox',
+                        'text': u'Записувати історію Wn8',
+                        'value': g_configParams.recordAvgTeamWn8.defaultMsaValue,
+                        'varName': 'record-avg-team-wn8',
+                        'tooltip': u'{HEADER}Записувати історію середнього Wn8{/HEADER}{BODY}Записувати історію середнього Wn8 ворожої команди{/BODY}'
+                    },
+                    {
+                        'type': 'Button',
+                        'text': u'Очистити історію WN8',
+                        'varName': 'clear-wn8-history',
+                        'tooltip': u'{HEADER}Очистити історію WN8{/HEADER}{BODY}Видалити файл з історією записів середнього WN8 ворожої команди. Ця дія незворотна!{/BODY}'
                     },
                     {
                         'type': 'Label',
@@ -246,7 +260,6 @@ class Config(object):
             print_error("Error registering mod template: %s" % str(e))
 
     def on_settings_changed(self, linkage, newSettings):
-        """Callback для зміни налаштувань через MSA"""
         if linkage != modLinkage:
             return
         try:
@@ -266,11 +279,19 @@ class Config(object):
             self._notify_config_changed()
             
             print_debug("Settings updated successfully")
+
+            if 'clear-wn8-history' in newSettings:
+                print_debug("Clear WN8 history button pressed")
+                success = g_avgWN8.clear_wn8_history()
+                if success:
+                    print_log("WN8 history cleared successfully via settings")
+                else:
+                    print_error("Failed to clear WN8 history via settings")
+                return
         except Exception as e:
             print_error("Error updating settings from MSA: %s" % str(e))
 
     def _notify_config_changed(self):
-        """Повідомляє інші компоненти про зміни конфігурації"""
         try:
             from . import g_arenaInfoProvider
             if g_arenaInfoProvider and hasattr(g_arenaInfoProvider, 'on_config_changed'):
@@ -280,7 +301,6 @@ class Config(object):
             print_error("Error notifying config change: %s" % str(e))
 
     def sync_with_msa(self):
-        """Синхронізація з ModsSettingsApi"""
         try:
             print_debug("MSA sync called - using config file values")
         except Exception as e:
