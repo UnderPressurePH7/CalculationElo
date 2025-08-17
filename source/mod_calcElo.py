@@ -1,7 +1,7 @@
 from CalculationElo.utils import *
 from CalculationElo.arenaInfoProvider import ArenaInfoProvider
 
-__version__ = "0.0.5" 
+__version__ = "0.0.6" 
 __author__ = "Under_Pressure"
 __copyright__ = "Copyright 2025, Under_Pressure"
 __mod_name__ = "Calculation_Elo"
