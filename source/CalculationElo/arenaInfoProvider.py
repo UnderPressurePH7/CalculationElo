@@ -4,8 +4,6 @@ from PlayerEvents import g_playerEvents
 from helpers import dependency
 from skeletons.gui.battle_session import IBattleSessionProvider
 
-from gui.mods.gambiter.flash import g_guiCache
-
 from .config import g_config
 from .config_param import g_configParams
 
@@ -27,7 +25,8 @@ class ArenaInfoProvider():
         
         self.team_info = {'allies': None, 'enemies': None, 'id_allies': None, 'id_enemies': None, 
                           'allies_rating': None, 'enemies_rating': None, 
-                          'elo_plus': None, 'elo_minus': None, 'wins_percent': None, 'battles_count': None }
+                          'elo_plus': None, 'elo_minus': None, 'wins_percent': None, 'battles_count': None, 
+                          'avg_team_wn8': None }
         
         self.ON_HOTKEY_PRESSED = False
 

@@ -1,34 +1,11 @@
-import urllib2
-import json
-import time
-import socket
-
+# -*- coding: utf-8 -*-
 from .utils import *
 
 class ClanAPI:
     
     def __init__(self):
         self.wg_key = '8f04db08e54ff45dbd7d4b7e7de0b76b'
-        socket.setdefaulttimeout(10)
 
-    def _fetch_data_with_retry(self, url, retries=3, delay=5):
-        for attempt in range(retries):
-            try:
-                response = urllib2.urlopen(url)
-                data = response.read()
-                return json.loads(data)
-            except urllib2.URLError as e:
-                print_error("URLError: {}, attempt {}/{}".format(e, attempt + 1, retries))
-                if hasattr(e, 'reason') and '10054' in str(e.reason):
-                    print_debug("Connection forcibly closed by the server. Retrying...")
-                time.sleep(delay)
-            except ValueError as e:
-                print_error("JSON decoding error: {}".format(e))
-                break
-            except Exception as e:
-                print_error("Unexpected error: {}".format(e))
-                break
-        return None
 
     def get_clan_id(self, clan_tag):
 
@@ -48,7 +25,7 @@ class ClanAPI:
     def get_clan_rating(self, clan_id, batle_lvl, gui_type):
         if gui_type in (15, 16):
             url = "https://wgsh-woteu.wargaming.net/game_api/stronghold_info/clan/{}".format(clan_id)
-            data = self._fetch_data_with_retry(url)    
+            data = fetch_data_with_retry(url)    
             if not data or 'stats' not in data:
                 print_error("The 'stats' key or Data is missing from the API response.")
                 return 0
@@ -65,7 +42,7 @@ class ClanAPI:
 
         if gui_type in (15, 16):
             url = "https://wgsh-woteu.wargaming.net/game_api/stronghold_info/clan/{}".format(clan_id)
-            data = self._fetch_data_with_retry(url)    
+            data = fetch_data_with_retry(url)    
             if not data or 'stats' not in data:
                 print_error("The 'stats' key or Data is missing from the API response.")
                 return 0
@@ -77,5 +54,4 @@ class ClanAPI:
             wins_percent = data['stats'][str(batle_lvl)]['sorties']['wins_percent_for_last_28_days']
             battles_count = data['stats'][str(batle_lvl)]['sorties']['battles_count_for_last_28_days']
             return wins_percent, battles_count        
-        
-        
+
