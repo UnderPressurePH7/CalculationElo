@@ -11,7 +11,7 @@ class ClanAPI:
 
         url  = 'https://api.worldoftanks.eu/wot/clans/list/?application_id={}&search={}'.format(self.wg_key, clan_tag)
 
-        data = self._fetch_data_with_retry(url)
+        data = fetch_data_with_retry(url)
 
         if data and data.get('status') == 'ok' and data.get('meta', {}).get('count', 0) > 0:
             clan_id = data['data'][0].get('clan_id')
