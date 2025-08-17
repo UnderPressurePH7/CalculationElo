@@ -55,6 +55,9 @@ class AvgWN8:
         
     def get_avg_team_wn8(self, account_ids):
         try:
+            if account_ids is None:
+                print_debug("Account IDs list is None.")
+                return 0
             wn8_values = []
             for account_id in account_ids:
                 wn8 = self._get_recent_wn8(account_id)
