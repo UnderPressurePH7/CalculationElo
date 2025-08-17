@@ -19,7 +19,8 @@ class MultiTextPanel:
         self.isKeyPressed = False
         self.active_keys = {}
         self.components_created = False  
-        
+
+        self.avgEnemyWn8 = 0
         self.currentPanelX = g_configParams.panelPosition.value[0]
         self.currentPanelY = g_configParams.panelPosition.value[1]
         self.wasPositionEdited = False
@@ -204,7 +205,6 @@ class MultiTextPanel:
                     g_guiFlash.createComponent('eloInfoPanel.enemiesNameText', COMPONENT_TYPE.LABEL, enemies_props)
                     current_y += 20
 
-                # Рейтинги команд
                 allies_rating_color = g_configParams.alliesRatingColor.getHexColor()
                 enemies_rating_color = g_configParams.enemiesRatingColor.getHexColor()
 
@@ -285,7 +285,8 @@ class MultiTextPanel:
                     g_guiFlash.createComponent('eloInfoPanel.statsText', COMPONENT_TYPE.LABEL, stats_props)
                     current_y += 17
 
-                if g_configParams.showAvgTeamWn8.value and avg_team_wn8 > 0:
+                self.avgEnemyWn8 = avg_team_wn8
+                if g_configParams.showAvgTeamWn8.value :
                     avg_wn8_color = g_configParams.avgWN8Color.getHexColor()
 
                     avg_wn8_props = {
@@ -414,13 +415,14 @@ class MultiTextPanel:
                 
                 g_guiFlash.updateComponent('eloInfoPanel.statsText', update_props)
 
-            if g_configParams.showAvgTeamWn8.value and avg_team_wn8 > 0 and g_guiCache.isComponent('eloInfoPanel.avgTeamWn8Text'):
+            self.avgEnemyWn8 = avg_team_wn8
+            if g_configParams.showAvgTeamWn8.value and g_guiCache.isComponent('eloInfoPanel.avgTeamWn8Text'):
                 avg_wn8_color = g_configParams.avgWN8Color.getHexColor()
                 avg_team_wn8_str = str(avg_team_wn8).zfill(4) if avg_team_wn8 else "0000"
                 
                 avg_wn8_text = '<font face="Tahoma" size="14" color="{0}"><b>wn8 {1}</b></font>'.format(avg_wn8_color, avg_team_wn8_str)
-                
-                update_props = {'text': avg_wn8_text}
+ 
+                update_props = {'text': avg_wn8_text , 'visible': avg_team_wn8 > 0}
                 if shadow_config:
                     update_props['shadow'] = shadow_config
                 
@@ -499,8 +501,11 @@ class MultiTextPanel:
             
             for component_id in component_ids:
                 if g_guiCache.isComponent(component_id):
-                    g_guiFlash.updateComponent(component_id, {'visible': isVisible})
-            
+                    if component_id == 'eloInfoPanel.avgTeamWn8Text':
+                        g_guiFlash.updateComponent(component_id, {'visible': isVisible and self.avgEnemyWn8 > 0})
+                    else:
+                        g_guiFlash.updateComponent(component_id, {'visible': isVisible})
+
             print_debug("[MultiTextPanel] Component visibility updated successfully")
         except Exception as e:
             print_error("[MultiTextPanel] Error setting component visibility: %s" % str(e))
