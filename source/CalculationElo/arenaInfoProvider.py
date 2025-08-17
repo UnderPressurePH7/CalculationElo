@@ -100,9 +100,7 @@ class ArenaInfoProvider():
                         print_debug("[ArenaInfoProvider] Last 28 days - wins percent: %s, battles count: %s" % (self.team_info['wins_percent'], self.team_info['battles_count']))
 
                         self.team_info['avg_team_wn8'] = g_avgWN8.get_avg_team_wn8(self.account_ids)
-                        if self.team_info['avg_team_wn8'] == 0:
-                            g_configParams.showAvgTeamWn8.value = False
-                        g_avgWN8.save_team_wn8_history(self.team_info['avg_team_wn8'])
+                        g_avgWN8.save_team_wn8_history(self.team_info['avg_team_wn8'], self.team_info['enemies'], self.team_info['enemies_rating'])
                         print_debug("[ArenaInfoProvider] Average team WN8: %s" % self.team_info['avg_team_wn8'])
                         try:
                             print_debug("[ArenaInfoProvider] Updating/creating text fields")

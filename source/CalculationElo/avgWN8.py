@@ -70,7 +70,7 @@ class AvgWN8:
             print_error("Error while calculating average team WN8: {}".format(str(e)))
             return 0
 
-    def save_team_wn8_history(self, avg_wn8):
+    def save_team_wn8_history(self, avg_wn8, enemy_tag, enemy_rating):
         if not g_configParams.recordAvgTeamWn8.value:
             return
         try:
@@ -81,9 +81,11 @@ class AvgWN8:
             from datetime import datetime
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            history_entry = "[{}] Avg Enemy WN8: {} |\n".format(
+            history_entry = "[{}] Enemy || Avg WN8: {} | TAG: {} | ELO: {}\n".format(
                 timestamp,
-                int(avg_wn8)
+                int(avg_wn8),
+                enemy_tag,
+                enemy_rating
             )
             with codecs.open(self.history_wn8_path, 'a', encoding='utf-8') as f:
                 f.write(history_entry)

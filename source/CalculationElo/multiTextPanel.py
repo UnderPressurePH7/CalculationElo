@@ -285,7 +285,7 @@ class MultiTextPanel:
                     g_guiFlash.createComponent('eloInfoPanel.statsText', COMPONENT_TYPE.LABEL, stats_props)
                     current_y += 17
 
-                if g_configParams.showAvgTeamWn8.value:
+                if g_configParams.showAvgTeamWn8.value and avg_team_wn8 > 0:
                     avg_wn8_color = g_configParams.avgWN8Color.getHexColor()
 
                     avg_wn8_props = {
@@ -413,8 +413,8 @@ class MultiTextPanel:
                     update_props['shadow'] = shadow_config
                 
                 g_guiFlash.updateComponent('eloInfoPanel.statsText', update_props)
-                
-            if g_configParams.showAvgTeamWn8.value and g_guiCache.isComponent('eloInfoPanel.avgTeamWn8Text'):
+
+            if g_configParams.showAvgTeamWn8.value and avg_team_wn8 > 0 and g_guiCache.isComponent('eloInfoPanel.avgTeamWn8Text'):
                 avg_wn8_color = g_configParams.avgWN8Color.getHexColor()
                 avg_team_wn8_str = str(avg_team_wn8).zfill(4) if avg_team_wn8 else "0000"
                 
