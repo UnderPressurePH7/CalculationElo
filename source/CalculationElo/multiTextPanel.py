@@ -319,7 +319,7 @@ class MultiTextPanel:
             if g_configParams.showAvgTeamWn8.value and g_guiCache.isComponent('eloInfoPanel.avgTeamWn8Text'):
                 avg_team_wn8_str = str(avg_team_wn8).zfill(4) if avg_team_wn8 else "0000"
                 g_guiFlash.updateComponent('eloInfoPanel.avgTeamWn8Text', {
-                    'text': '<font face="Tahoma" size="18" color="#FFFFFF"><b>{0}</b></font>'.format(avg_team_wn8_str),
+                    'text': '<font face="Tahoma" size="14" color="#FFFFFF"><b>{0}</b></font>'.format(avg_team_wn8_str),
                     'shadow': self._getShadowConfig()
                 })
 
