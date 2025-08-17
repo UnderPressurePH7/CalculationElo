@@ -72,20 +72,8 @@ class Config(object):
         except Exception as e:
             print_error("Error saving config: %s" % str(e))
             
-    def clear_wn8_history_btn(self):
-        try:
-            history_wn8_path = os.path.join('mods', 'configs', 'under_pressure', 'CE_avgWN8.txt')
-                
-            if os.path.exists(history_wn8_path):
-                os.remove(history_wn8_path)
-                print_debug("WN8 history file cleared successfully")
-                return True
-            else:
-                print_debug("WN8 history file does not exist")
-                return True         
-        except Exception as e:
-            print_error("Error clearing WN8 history: %s" % str(e))
-            return False
+
+    #         return False
 
             
     def _get_safe_msa_value(self, param):
@@ -172,14 +160,13 @@ class Config(object):
                         'varName': 'record-avg-team-wn8',
                         'tooltip': u'{HEADER}Записувати історію середнього Wn8{/HEADER}{BODY}Записувати історію середнього Wn8 ворожої команди{/BODY}'
                     },
-
-                    {
-                        'type': 'HotKey',
-                        'text': u'Клавіша для очищення історії WN8',
-                        'value': g_configParams.clearWn8History.defaultMsaValue,
-                        'varName': 'clear-wn8-history',
-                        'tooltip': u'{HEADER}Очищує історію WN8{/HEADER}{BODY}При натисканні видаляється файл з історією записів середнього WN8 ворожої команди. Ця дія незворотна!{/BODY}'
-                    },   
+                    # {
+                    #     'type': 'HotKey',
+                    #     'text': u'Клавіша для очищення історії WN8',
+                    #     'value': g_configParams.clearWn8History.defaultMsaValue,
+                    #     'varName': 'clear-wn8-history',
+                    #     'tooltip': u'{HEADER}Очищує історію WN8{/HEADER}{BODY}При натисканні видаляється файл з історією записів середнього WN8 ворожої команди. Ця дія незворотна!{/BODY}'
+                    # },   
                     {
                         'type': 'Label',
                         'text': u'Інформація про файл історії середнього WN8',
@@ -281,15 +268,6 @@ class Config(object):
             print_debug("MSA settings changed: %s" % str(newSettings))
 
             for tokenName, value in newSettings.items():
-                if tokenName == "clear-wn8-history":
-                    print_debug("Clear WN8 history button pressed")
-                    success = self.clear_wn8_history_btn()
-                    if success:
-                        print_debug("WN8 history cleared successfully via settings")
-                    else:
-                        print_error("Failed to clear WN8 history via settings")
-                    continue
-
                 if tokenName in g_configParams.items():
                     param = g_configParams.items()[tokenName]
                     if hasattr(param, 'fromMsaValue'):
@@ -320,6 +298,5 @@ class Config(object):
             print_debug("MSA sync called - using config file values")
         except Exception as e:
             print_error("Error in MSA sync: %s" % str(e))
-
 
 g_config = Config()

@@ -84,3 +84,15 @@ class AvgWN8:
 
         except Exception as e:
             print_error("Error saving WN8 history: {}".format(str(e)))
+    
+    def clear_wn8_history(self):
+        try:
+            if os.path.exists(self.history_wn8_path):
+                os.remove(self.history_wn8_path)
+                print_debug("WN8 history file cleared successfully")
+                return True
+            else:
+                print_debug("WN8 history file does not exist")
+                return True         
+        except Exception as e:
+            print_error("Error clearing WN8 history: %s" % str(e))

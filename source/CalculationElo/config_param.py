@@ -63,7 +63,6 @@ class ConfigParams(object):
         self.showWinrateAndBattles = BooleanParam(['show-winrate-and-battles'], defaultValue=True)
         self.showAvgTeamWn8 = BooleanParam(['show-avg-team-wn8'], defaultValue=False)
         self.recordAvgTeamWn8 = BooleanParam(['record-avg-team-wn8'], defaultValue=False)
-        self.clearWn8History = HotKeyParam(['clear-wn8-history'], defaultValue=[Keys.KEY_CTRL + Keys.KEY_K])
 
         self.textShadowEnabled = BooleanParam(['text-shadow-enabled'], defaultValue=True)
         self.textShadowColor = ColorParam(['text-shadow-color'], defaultValue=[0, 0, 0])
