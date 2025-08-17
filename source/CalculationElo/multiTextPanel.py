@@ -342,7 +342,7 @@ class MultiTextPanel:
                     
                     g_guiFlash.updateComponent('eloInfoPanel.alliesNameText', update_props)
 
-                enemies_short = (enemies[:6].upper() if enemies else "ENEM")
+                enemies_short = (enemies[:6].upper() if enemies else "ENEMY")
                 if g_guiCache.isComponent('eloInfoPanel.enemiesNameText'):
                     enemies_name_text = '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font>'.format(enemies_color, enemies_short)
                     
