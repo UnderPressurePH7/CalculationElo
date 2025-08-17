@@ -191,7 +191,6 @@ class ColorParam(Param):
             return list(self.defaultValue)
 
     def getHexColor(self):
-        """Метод для отримання кольору в hex форматі"""
         try:
             return '#' + self._colorToHex(self.value).lstrip('#')
         except Exception as e:
