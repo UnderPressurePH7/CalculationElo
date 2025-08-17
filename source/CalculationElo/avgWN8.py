@@ -61,6 +61,8 @@ class AvgWN8:
             wn8_values = []
             for account_id in account_ids:
                 wn8 = self._get_recent_wn8(account_id)
+                if wn8 is None or wn8 == 0:
+                    continue
                 wn8_values.append(wn8)
             if not wn8_values:
                 return 0
@@ -81,7 +83,7 @@ class AvgWN8:
             from datetime import datetime
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            history_entry = "[{}] Enemy || Avg WN8: {} | TAG: {} | ELO: {}\n".format(
+            history_entry = "[{}] Enemy || Avg WN8: {} | TAG: {} | ELO: {} |\n".format(
                 timestamp,
                 int(avg_wn8),
                 enemy_tag,
