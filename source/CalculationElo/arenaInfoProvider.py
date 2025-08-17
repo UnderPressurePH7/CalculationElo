@@ -108,7 +108,6 @@ class ArenaInfoProvider():
                                 self.team_info['elo_minus'], 
                                 self.team_info['wins_percent'], 
                                 self.team_info['battles_count'],
-                                self.team_info['avg_team_wn8'],
                                 self.team_info['avg_team_wn8']
                             )
                         except Exception as ex:
