@@ -64,7 +64,7 @@ class AvgWN8:
 
 
     def save_team_wn8_history(self, avg_wn8):
-        if not g_configParams.recordAvgTeamWn8.msaValue:
+        if not g_configParams.recordAvgTeamWn8.value:
             return
         try:
             self._ensure_config_directory()

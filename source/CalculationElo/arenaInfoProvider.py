@@ -230,10 +230,15 @@ class ArenaInfoProvider():
             self.team_info['enemies'] = "Unknown"
 
     def set_account_ids_in_battle(self, vehicles_items):
-        for vehicle_id, vehicle_info in vehicles_items:
-            if vehicle_info['team'] != self.__playerTeam:
-                account_id = vehicle_info['accountDBID']
-            self.account_ids.append(account_id)
+        try:
+            for vehicle_id, vehicle_info in vehicles_items:
+                if vehicle_info['team'] != self.__playerTeam:
+                    account_id = vehicle_info['accountDBID']
+                self.account_ids.append(account_id)
+        except Exception as e:
+            print_debug("[ArenaInfoProvider] Error setting acc_ids: %s" % str(e))
+            self.account_ids = []
+
 
 
     def get_player_tank_tier(self, vehicle_id):

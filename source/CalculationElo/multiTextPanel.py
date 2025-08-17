@@ -289,7 +289,7 @@ class MultiTextPanel:
                     avg_wn8_color = g_configParams.avgWN8Color.getHexColor()
 
                     avg_wn8_props = {
-                        'text': '<font face="Tahoma" size="14" color="{0}"><b>0</b></font>'.format(avg_wn8_color),
+                        'text': '<font face="Tahoma" size="14" color="{0}"><b>wn8 0</b></font>'.format(avg_wn8_color),
                         'x': 0,
                         'y': current_y,
                         'alignX': COMPONENT_ALIGN.CENTER,
@@ -418,7 +418,7 @@ class MultiTextPanel:
                 avg_wn8_color = g_configParams.avgWN8Color.getHexColor()
                 avg_team_wn8_str = str(avg_team_wn8).zfill(4) if avg_team_wn8 else "0000"
                 
-                avg_wn8_text = '<font face="Tahoma" size="14" color="{0}"><b>{1}</b></font>'.format(avg_wn8_color, avg_team_wn8_str)
+                avg_wn8_text = '<font face="Tahoma" size="14" color="{0}"><b>wn8 {1}</b></font>'.format(avg_wn8_color, avg_team_wn8_str)
                 
                 update_props = {'text': avg_wn8_text}
                 if shadow_config:

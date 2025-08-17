@@ -147,14 +147,14 @@ class Config(object):
                         'text': u'Показувати середній Wn8',
                         'value': g_configParams.showAvgTeamWn8.defaultMsaValue,
                         'varName': 'show-avg-team-wn8',
-                        'tooltip': u'{HEADER}Показувати середній Wn8{/HEADER}{BODY}Показувати середній Wn8 команди{/BODY}'
+                        'tooltip': u'{HEADER}Показувати середній Wn8{/HEADER}{BODY}Показувати середній Wn8 ворожої команди{/BODY}'
                     },
                                         {
                         'type': 'CheckBox',
-                        'text': u'Записувати історію середнього Wn8',
+                        'text': u'Записувати історію Wn8',
                         'value': g_configParams.recordAvgTeamWn8.defaultMsaValue,
                         'varName': 'record-avg-team-wn8',
-                        'tooltip': u'{HEADER}Записувати історію середнього Wn8{/HEADER}{BODY}Записувати історію середнього Wn8 команд{/BODY}'
+                        'tooltip': u'{HEADER}Записувати історію середнього Wn8{/HEADER}{BODY}Записувати історію середнього Wn8 ворожої команди{/BODY}'
                     },
                     {
                         'type': 'Label',
