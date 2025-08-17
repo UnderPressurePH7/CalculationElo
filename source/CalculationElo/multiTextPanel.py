@@ -120,7 +120,7 @@ class MultiTextPanel:
             'quality': 1
         }
 
-    def create_text_fields(self, isVisible, allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count):
+    def create_text_fields(self, isVisible, allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count, avg_team_wn8):
         try:
             print_debug("[MultiTextPanel] Creating text fields with visibility: %s" % isVisible)
             
@@ -222,15 +222,27 @@ class MultiTextPanel:
                         'visible': isVisible,
                         'shadow': self._getShadowConfig()
                     })
+                    current_y += 17
+
+                if g_configParams.showAvgTeamWn8.value:
+                    g_guiFlash.createComponent('eloInfoPanel.avgTeamWn8Text', COMPONENT_TYPE.LABEL, {
+                        'text': '<font face="Tahoma" size="14" color="#FFFFFF"><b>0</b></font>',
+                        'x': 0,
+                        'y': current_y,
+                        'alignX': COMPONENT_ALIGN.CENTER,
+                        'isHtml': True,
+                        'visible': isVisible,
+                        'shadow': self._getShadowConfig()
+                    })
 
                 self.components_created = True
                 print_debug("[MultiTextPanel] All components created successfully")
-            self.update_text_fields(allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count)
-            
+            self.update_text_fields(allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count, avg_team_wn8)
+
         except Exception as e:
             print_error("[MultiTextPanel] Error creating text fields: %s" % str(e))
 
-    def update_text_fields(self, allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count):
+    def update_text_fields(self, allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count, avg_team_wn8):
         try:
             print_debug("[MultiTextPanel] Updating text fields")
             
@@ -304,7 +316,13 @@ class MultiTextPanel:
                     'text': stats_text,
                     'shadow': self._getShadowConfig()
                 })
-            
+            if g_configParams.showAvgTeamWn8.value and g_guiCache.isComponent('eloInfoPanel.avgTeamWn8Text'):
+                avg_team_wn8_str = str(avg_team_wn8).zfill(4) if avg_team_wn8 else "0000"
+                g_guiFlash.updateComponent('eloInfoPanel.avgTeamWn8Text', {
+                    'text': '<font face="Tahoma" size="18" color="#FFFFFF"><b>{0}</b></font>'.format(avg_team_wn8_str),
+                    'shadow': self._getShadowConfig()
+                })
+
             print_debug("[MultiTextPanel] Text fields updated successfully")
             
         except Exception as e:
@@ -372,7 +390,8 @@ class MultiTextPanel:
                 'eloInfoPanel.enemiesRatingText',
                 'eloInfoPanel.eloPlusText',
                 'eloInfoPanel.eloMinusText',
-                'eloInfoPanel.statsText'
+                'eloInfoPanel.statsText',
+                'eloInfoPanel.avgTeamWn8Text'
             ]
             
             for component_id in component_ids:
@@ -425,6 +444,7 @@ class MultiTextPanel:
                 'eloInfoPanel.eloPlusText',
                 'eloInfoPanel.eloMinusText',
                 'eloInfoPanel.statsText',
+                'eloInfoPanel.avgTeamWn8Text',
                 'eloInfoPanel' 
             ]
             

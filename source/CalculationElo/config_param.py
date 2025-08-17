@@ -55,12 +55,15 @@ class ConfigParams(object):
         self.eloLossColor = ColorParam(['elo-loss-color'], defaultValue=[255, 0, 0])
         self.winrateColor = ColorParam(['winrate-color'], defaultValue=[255, 255, 0])
         self.battlesColor = ColorParam(['battles-color'], defaultValue=[255, 255, 255])
+        self.avgWN8Color = ColorParam(['avg-wn8-color'], defaultValue=[255, 255, 255])
 
         self.showTitleVisible = BooleanParam(['show-title-visible'], defaultValue=False)
         self.showTeamNames = BooleanParam(['show-team-names'], defaultValue=True)
         self.showEloChanges = BooleanParam(['show-elo-changes'], defaultValue=True)
         self.showWinrateAndBattles = BooleanParam(['show-winrate-and-battles'], defaultValue=True)
-        
+        self.showAvgTeamWn8 = BooleanParam(['show-avg-team-wn8'], defaultValue=False)
+        self.recordAvgTeamWn8 = BooleanParam(['record-avg-team-wn8'], defaultValue=False)
+
         self.textShadowEnabled = BooleanParam(['text-shadow-enabled'], defaultValue=True)
         self.textShadowColor = ColorParam(['text-shadow-color'], defaultValue=[0, 0, 0])
         self.textShadowDistance = ListParam(['text-shadow-distance'], defaultValue=[1])

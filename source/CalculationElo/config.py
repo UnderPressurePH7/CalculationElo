@@ -143,6 +143,20 @@ class Config(object):
                         'tooltip': u'{HEADER}Показувати статистику{/HEADER}{BODY}Показувати відсоток перемог та кількість боїв суперника{/BODY}'
                     },
                     {
+                        'type': 'CheckBox',
+                        'text': u'Показувати середній Wn8',
+                        'value': g_configParams.showAvgTeamWn8.defaultMsaValue,
+                        'varName': 'show-avg-team-wn8',
+                        'tooltip': u'{HEADER}Показувати середній Wn8{/HEADER}{BODY}Показувати середній Wn8 команди{/BODY}'
+                    },
+                                        {
+                        'type': 'CheckBox',
+                        'text': u'Записувати історію середнього Wn8',
+                        'value': g_configParams.recordAvgTeamWn8.defaultMsaValue,
+                        'varName': 'record-avg-team-wn8',
+                        'tooltip': u'{HEADER}Записувати історію середнього Wn8{/HEADER}{BODY}Записувати історію середнього Wn8 команд{/BODY}'
+                    },
+                    {
                         'type': 'Label',
                         'text': u'Інформація про файл конфігурації',
                         'tooltip': u'{HEADER}Файл конфігурації{/HEADER}{BODY}Файл конфігурації знаходиться в папці [Папка із грою]\\mods\\configs\\under_pressure під назвою config.json. \nЯкщо ви хочете згенерувати конфігурацію за замовчуванням, то видаліть даний файл і перезапустіть гру. Також файл конфігурації можна редагувати вручну.{/BODY}',
@@ -214,6 +228,13 @@ class Config(object):
                                 'value': g_configParams.battlesColor.defaultMsaValue,
                                 'varName': 'battles-color',
                                 'tooltip': u'{HEADER}Колір кількості боїв{/HEADER}{BODY}Колір для відображення кількості боїв{/BODY}'
+                            },
+                            {
+                                'type': 'ColorChoice',
+                                'text': u'Колір середнього Wn8',
+                                'value': g_configParams.avgWN8Color.defaultMsaValue,
+                                'varName': 'avg-wn8-color',
+                                'tooltip': u'{HEADER}Колір середнього Wn8{/HEADER}{BODY}Колір для відображення середнього Wn8{/BODY}'
                             }
                         ]
                     }

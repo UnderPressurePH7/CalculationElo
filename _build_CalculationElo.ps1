@@ -1,7 +1,7 @@
 $PythonExe = "C:\Python27\python.exe"
 $PackerUser = "me.under_pressure"
 $PackerName = "calculationelo"
-$PackerVersion = "0.0.5"
+$PackerVersion = "0.0.6"
 $PackerDescription = "None"
 
 
