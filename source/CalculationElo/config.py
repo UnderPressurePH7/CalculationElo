@@ -115,7 +115,7 @@ class Config(object):
                         'varName': 'display-mode',
                         'options': [
                             {'label': u'Завжди показувати'},
-                            {'label': u'Показувати при натисканні клавіші'}
+                            {'label': u'Показувати при натисканні'}
                         ],
                         'tooltip': u'{HEADER}Режим відображення{/HEADER}{BODY}Вибирати коли показувати панель з інформацією{/BODY}'
                     },
@@ -124,7 +124,7 @@ class Config(object):
                         'text': u'Гаряча клавіша',
                         'value': g_configParams.eloHotKey.defaultMsaValue,
                         'varName': 'elo-hotkey',
-                        'tooltip': u'{HEADER}Гаряча клавіша{/HEADER}{BODY}Клавіша для показу панелі у режимі "По натисканню"{/BODY}'
+                        'tooltip': u'{HEADER}Гаряча клавіша{/HEADER}{BODY}Клавіша для показу панелі у режимі "При натисканні"{/BODY}'
                     },
                     {
                         'type': 'Label',
@@ -172,19 +172,14 @@ class Config(object):
                         'varName': 'record-avg-team-wn8',
                         'tooltip': u'{HEADER}Записувати історію середнього Wn8{/HEADER}{BODY}Записувати історію середнього Wn8 ворожої команди{/BODY}'
                     },
+
                     {
-                        'type': 'CheckBox',
-                        'text': u'Записувати історію Wn8',
-                        'value': g_configParams.recordAvgTeamWn8.defaultMsaValue,
-                        'varName': 'record-avg-team-wn8',
-                        'tooltip': u'{HEADER}Записувати історію середнього Wn8{/HEADER}{BODY}Записувати історію середнього Wn8 ворожої команди{/BODY}'
-                    },
-                    # {
-                    #     'type': 'Button',
-                    #     'text': u'Очистити історію WN8',
-                    #     'varName': 'clear-wn8-history',
-                    #     'tooltip': u'{HEADER}Очистити історію WN8{/HEADER}{BODY}Видалити файл з історією записів середнього WN8 ворожої команди. Ця дія незворотна!{/BODY}'
-                    # },
+                        'type': 'HotKey',
+                        'text': u'Клавіша для очищення історії WN8',
+                        'value': g_configParams.clearWn8History.defaultMsaValue,
+                        'varName': 'clear-wn8-history',
+                        'tooltip': u'{HEADER}Очищує історію WN8{/HEADER}{BODY}При натисканні видаляється файл з історією записів середнього WN8 ворожої команди. Ця дія незворотна!{/BODY}'
+                    },   
                     {
                         'type': 'Label',
                         'text': u'Інформація про файл історії середнього WN8',
@@ -268,7 +263,7 @@ class Config(object):
                                 'text': u'Колір середнього Wn8',
                                 'value': g_configParams.avgWN8Color.defaultMsaValue,
                                 'varName': 'avg-wn8-color',
-                                'tooltip': u'{HEADER}Колір середнього Wn8{/HEADER}{BODY}Колір для відображення середнього Wn8{/BODY}'
+                                'tooltip': u'{HEADER}Колір середнього Wn8{/HEADER}{BODY}Колір для відображення середнього Wn8 для ворожої команди{/BODY}'
                             }
                         ]
                     }
@@ -286,14 +281,14 @@ class Config(object):
             print_debug("MSA settings changed: %s" % str(newSettings))
 
             for tokenName, value in newSettings.items():
-                # if tokenName == "clear-wn8-history":
-                #     print_debug("Clear WN8 history button pressed")
-                #     success = self.clear_wn8_history_btn()
-                #     if success:
-                #         print_debug("WN8 history cleared successfully via settings")
-                #     else:
-                #         print_error("Failed to clear WN8 history via settings")
-                #     continue
+                if tokenName == "clear-wn8-history":
+                    print_debug("Clear WN8 history button pressed")
+                    success = self.clear_wn8_history_btn()
+                    if success:
+                        print_debug("WN8 history cleared successfully via settings")
+                    else:
+                        print_error("Failed to clear WN8 history via settings")
+                    continue
 
                 if tokenName in g_configParams.items():
                     param = g_configParams.items()[tokenName]
