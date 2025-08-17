@@ -16,7 +16,7 @@ def print_debug(log):
     if DEBUG_MODE:
         print("[CalculationElo] [DEBUG]: {}".format(str(log)))
 
-def fetch_data_with_retry(self, url, retries=3, delay=5):
+def fetch_data_with_retry(url, retries=3, delay=5):
     for attempt in range(retries):
         try:
             response = urllib2.urlopen(url)
