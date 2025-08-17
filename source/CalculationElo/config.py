@@ -72,7 +72,23 @@ class Config(object):
             print_debug("Config saved successfully")
         except Exception as e:
             print_error("Error saving config: %s" % str(e))
+            
+    def clear_wn8_history_btn(self):
+        try:
+            history_wn8_path = os.path.join('mods', 'configs', 'under_pressure', 'CE_avgWN8.txt')
+                
+            if os.path.exists(history_wn8_path):
+                os.remove(history_wn8_path)
+                print_debug("WN8 history file cleared successfully")
+                return True
+            else:
+                print_debug("WN8 history file does not exist")
+                return True         
+        except Exception as e:
+            print_error("Error clearing WN8 history: %s" % str(e))
+            return False
 
+            
     def _get_safe_msa_value(self, param):
         try:
             if hasattr(param, 'msaValue'):
@@ -264,7 +280,16 @@ class Config(object):
             return
         try:
             print_debug("MSA settings changed: %s" % str(newSettings))
-            
+
+            if 'clear-wn8-history' in newSettings:
+                print_debug("Clear WN8 history button pressed")
+                success = self.clear_wn8_history_btn()
+                if success:
+                    print_debug("WN8 history cleared successfully via settings")
+                else:
+                    print_error("Failed to clear WN8 history via settings")
+                return
+
             for tokenName, value in newSettings.items():
                 if tokenName in g_configParams.items():
                     param = g_configParams.items()[tokenName]
@@ -279,15 +304,6 @@ class Config(object):
             self._notify_config_changed()
             
             print_debug("Settings updated successfully")
-
-            if 'clear-wn8-history' in newSettings:
-                print_debug("Clear WN8 history button pressed")
-                success = g_avgWN8.clear_wn8_history()
-                if success:
-                    print_log("WN8 history cleared successfully via settings")
-                else:
-                    print_error("Failed to clear WN8 history via settings")
-                return
         except Exception as e:
             print_error("Error updating settings from MSA: %s" % str(e))
 
