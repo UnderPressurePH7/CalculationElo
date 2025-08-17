@@ -285,14 +285,15 @@ class Config(object):
         try:
             print_debug("MSA settings changed: %s" % str(newSettings))
 
-            if 'clear-wn8-history' in newSettings:
-                print_debug("Clear WN8 history button pressed")
-                success = self.clear_wn8_history_btn()
-                if success:
-                    print_debug("WN8 history cleared successfully via settings")
-                else:
-                    print_error("Failed to clear WN8 history via settings")
-                return
+            for tokenName, value in newSettings.items():
+                if tokenName == "clear-wn8-history":
+                    print_debug("Clear WN8 history button pressed")
+                    success = self.clear_wn8_history_btn()
+                    if success:
+                        print_debug("WN8 history cleared successfully via settings")
+                    else:
+                        print_error("Failed to clear WN8 history via settings")
+                    return
 
             for tokenName, value in newSettings.items():
                 if tokenName in g_configParams.items():
