@@ -235,7 +235,7 @@ class ArenaInfoProvider():
             for vehicle_id, vehicle_info in vehicles_items:
                 if vehicle_info['team'] != self.__playerTeam:
                     account_id = vehicle_info['accountDBID']
-                self.account_ids.append(account_id)
+                    self.account_ids.append(account_id)
         except Exception as e:
             print_debug("[ArenaInfoProvider] Error setting acc_ids: %s" % str(e))
             self.account_ids = []
