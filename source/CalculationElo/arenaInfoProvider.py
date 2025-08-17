@@ -22,7 +22,7 @@ class ArenaInfoProvider():
 
     def __init__(self):
         print_debug("[ArenaInfoProvider] Initializing...")
-        
+        self.account_ids = []
         self.team_info = {'allies': None, 'enemies': None, 'id_allies': None, 'id_enemies': None, 
                           'allies_rating': None, 'enemies_rating': None, 
                           'elo_plus': None, 'elo_minus': None, 'wins_percent': None, 'battles_count': None, 
@@ -62,9 +62,11 @@ class ArenaInfoProvider():
                     print_debug("[ArenaInfoProvider] No vehicles found, retrying...")
                     BigWorld.callback(0.1, waitVehicles)
                     return
-
                 print_debug("[ArenaInfoProvider] Found %d vehicles" % len(vehicles))
-                    
+
+                self.set_account_ids_in_battle(vehicles)
+                print_debug("[ArenaInfoProvider] Account IDs in battle set: %s" % self.account_ids)
+                
                 if g_configParams.enabled.value:
                     print_debug("[ArenaInfoProvider] Mod enabled, processing...")
                     
@@ -95,7 +97,9 @@ class ArenaInfoProvider():
 
                         self.team_info['wins_percent'], self.team_info['battles_count'] = g_clanAPI.get_for_last_28_days(self.team_info['id_enemies'], self.__tank_tier, self.__guiType)
                         print_debug("[ArenaInfoProvider] Last 28 days - wins percent: %s, battles count: %s" % (self.team_info['wins_percent'], self.team_info['battles_count']))
-                        
+
+                        self.team_info['avg_team_wn8'] = g_avgWN8.get_avg_team_wn8(self.account_ids)    
+                        g_avgWN8.save_team_wn8_history(self.team_info['avg_team_wn8'])
                         try:
                             print_debug("[ArenaInfoProvider] Updating/creating text fields")
                             g_multiTextPanel.create_text_fields(
@@ -110,6 +114,7 @@ class ArenaInfoProvider():
                                 self.team_info['battles_count'],
                                 self.team_info['avg_team_wn8']
                             )
+
                         except Exception as ex:
                             print_error("[ArenaInfoProvider] Error creating/updating text fields: %s" % str(ex))
                     else:
@@ -222,6 +227,13 @@ class ArenaInfoProvider():
             print_error("[ArenaInfoProvider] Error setting team info: %s" % str(e))
             self.team_info['allies'] = "Unknown"
             self.team_info['enemies'] = "Unknown"
+
+    def set_account_ids_in_battle(self, vehicles_items):
+        for vehicle_id, vehicle_info in vehicles_items:
+            if vehicle_info['team'] != self.__playerTeam:
+                account_id = vehicle_info['accountDBID']
+            self.account_ids.append(account_id)
+
 
     def get_player_tank_tier(self, vehicle_id):
         try:
