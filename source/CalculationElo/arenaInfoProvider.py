@@ -46,8 +46,9 @@ class ArenaInfoProvider():
         
         self.team_info = {'allies': None, 'enemies': None, 'id_allies': None, 'id_enemies': None,
                       'allies_rating': None, 'enemies_rating': None,
-                      'elo_plus': None, 'elo_minus': None, 'wins_percent': None, 'battles_count': None}
-        
+                      'elo_plus': None, 'elo_minus': None, 'wins_percent': None, 'battles_count': None,
+                      'avg_team_wn8': None}
+
         def waitVehicles():
             try:
                 print_debug("[ArenaInfoProvider] Waiting for vehicles...")
@@ -106,7 +107,9 @@ class ArenaInfoProvider():
                                 self.team_info['elo_plus'], 
                                 self.team_info['elo_minus'], 
                                 self.team_info['wins_percent'], 
-                                self.team_info['battles_count']
+                                self.team_info['battles_count'],
+                                self.team_info['avg_team_wn8'],
+                                self.team_info['avg_team_wn8']
                             )
                         except Exception as ex:
                             print_error("[ArenaInfoProvider] Error creating/updating text fields: %s" % str(ex))
@@ -124,8 +127,9 @@ class ArenaInfoProvider():
         print_debug("[ArenaInfoProvider] Stopping...")
         self.team_info = {'allies': None, 'enemies': None, 'id_allies': None, 'id_enemies': None,
                           'allies_rating': None, 'enemies_rating': None,
-                          'elo_plus': None, 'elo_minus': None, 'wins_percent': None, 'battles_count': None }
-        
+                          'elo_plus': None, 'elo_minus': None, 'wins_percent': None, 'battles_count': None,
+                          'avg_team_wn8': None }
+
         try:
             g_multiTextPanel.persistParamsIfChanged() 
             g_multiTextPanel.delete_all_component() 
@@ -165,7 +169,8 @@ class ArenaInfoProvider():
                         self.team_info['elo_plus'], 
                         self.team_info['elo_minus'],
                         self.team_info['wins_percent'],
-                        self.team_info['battles_count']
+                        self.team_info['battles_count'],
+                        self.team_info['avg_team_wn8']
                     )
                 else:
                     print_debug("[ArenaInfoProvider] Invalid GUI type: %d" % self.__guiType)
