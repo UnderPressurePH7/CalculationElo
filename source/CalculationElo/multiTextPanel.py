@@ -332,7 +332,7 @@ class MultiTextPanel:
                 allies_color = g_configParams.alliesNamesColor.getHexColor()
                 enemies_color = g_configParams.enemiesNamesColor.getHexColor()
 
-                allies_short = (allies[:4].upper() if allies else "ALLY")
+                allies_short = (allies[:5].upper() if allies else "ALLY")
                 if g_guiCache.isComponent('eloInfoPanel.alliesNameText'):
                     allies_name_text = '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font>'.format(allies_color, allies_short)
                     
@@ -342,7 +342,7 @@ class MultiTextPanel:
                     
                     g_guiFlash.updateComponent('eloInfoPanel.alliesNameText', update_props)
 
-                enemies_short = (enemies[:4].upper() if enemies else "ENEM")
+                enemies_short = (enemies[:5].upper() if enemies else "ENEM")
                 if g_guiCache.isComponent('eloInfoPanel.enemiesNameText'):
                     enemies_name_text = '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font>'.format(enemies_color, enemies_short)
                     
