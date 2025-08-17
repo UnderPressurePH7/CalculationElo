@@ -31,6 +31,24 @@ class ArenaInfoProvider():
         self.ON_HOTKEY_PRESSED = False
 
         try:
+            print_debug("[ArenaInfoProvider] Creating text fields")
+            g_multiTextPanel.create_text_fields(
+            self.ON_HOTKEY_PRESSED, 
+            self.team_info['allies'], 
+            self.team_info['enemies'], 
+            self.team_info['allies_rating'], 
+            self.team_info['enemies_rating'], 
+            self.team_info['elo_plus'], 
+            self.team_info['elo_minus'], 
+            self.team_info['wins_percent'], 
+            self.team_info['battles_count'],
+            self.team_info['avg_team_wn8']
+        )
+
+        except Exception as ex:
+            print_error("[ArenaInfoProvider] Error creating text fields: %s" % str(ex))
+
+        try:
             g_playerEvents.onAvatarReady += self.start
             g_playerEvents.onAvatarBecomeNonPlayer += self.stop
             self.sessionProvider.onBattleSessionStart += self.onBattleSessionStart
@@ -64,12 +82,12 @@ class ArenaInfoProvider():
                     BigWorld.callback(0.1, waitVehicles)
                     return
                 print_debug("[ArenaInfoProvider] Found %d vehicles" % len(vehicles))
-
-                self.set_account_ids_in_battle(vehicles)
-                print_debug("[ArenaInfoProvider] Account IDs in battle set: %s" % self.account_ids)
                 
                 if g_configParams.enabled.value:
                     print_debug("[ArenaInfoProvider] Mod enabled, processing...")
+
+                    self.set_account_ids_in_battle(vehicles)
+                    print_debug("[ArenaInfoProvider] Account IDs in battle set: %s" % self.account_ids)
                     
                     if self.__guiType in (15, 16):
                         print_debug("[ArenaInfoProvider] Valid GUI type: %d" % self.__guiType)
@@ -159,29 +177,29 @@ class ArenaInfoProvider():
             
             g_config.sync_with_msa()
 
-            if g_configParams.enabled.value:
-                print_debug("[ArenaInfoProvider] Mod enabled, checking GUI type...")
+            # if g_configParams.enabled.value:
+            #     print_debug("[ArenaInfoProvider] Mod enabled, checking GUI type...")
                 
-                if self.__guiType in (15, 16):
-                    print_debug("[ArenaInfoProvider] Valid GUI type, preparing text fields...")
+            #     if self.__guiType in (15, 16):
+            #         print_debug("[ArenaInfoProvider] Valid GUI type, preparing text fields...")
                     
-                    print_debug("[ArenaInfoProvider] Creating/updating text fields with visibility: %s" % self.ON_HOTKEY_PRESSED)
-                    g_multiTextPanel.create_text_fields(
-                        self.ON_HOTKEY_PRESSED, 
-                        self.team_info['allies'], 
-                        self.team_info['enemies'], 
-                        self.team_info['allies_rating'], 
-                        self.team_info['enemies_rating'], 
-                        self.team_info['elo_plus'], 
-                        self.team_info['elo_minus'],
-                        self.team_info['wins_percent'],
-                        self.team_info['battles_count'],
-                        self.team_info['avg_team_wn8']
-                    )
-                else:
-                    print_debug("[ArenaInfoProvider] Invalid GUI type: %d" % self.__guiType)
-            else:
-                print_debug("[ArenaInfoProvider] Mod disabled")
+            #         print_debug("[ArenaInfoProvider] Creating/updating text fields with visibility: %s" % self.ON_HOTKEY_PRESSED)
+            #         g_multiTextPanel.create_text_fields(
+            #             self.ON_HOTKEY_PRESSED, 
+            #             self.team_info['allies'], 
+            #             self.team_info['enemies'], 
+            #             self.team_info['allies_rating'], 
+            #             self.team_info['enemies_rating'], 
+            #             self.team_info['elo_plus'], 
+            #             self.team_info['elo_minus'],
+            #             self.team_info['wins_percent'],
+            #             self.team_info['battles_count'],
+            #             self.team_info['avg_team_wn8']
+            #         )
+            #     else:
+            #         print_debug("[ArenaInfoProvider] Invalid GUI type: %d" % self.__guiType)
+            # else:
+            #     print_debug("[ArenaInfoProvider] Mod disabled")
                 
             self.__arena = arena
             
