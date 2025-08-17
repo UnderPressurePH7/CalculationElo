@@ -23,6 +23,8 @@ class MultiTextPanel:
         self.currentPanelX = g_configParams.panelPosition.value[0]
         self.currentPanelY = g_configParams.panelPosition.value[1]
         self.wasPositionEdited = False
+
+        self._save_callback_id = None
         
         COMPONENT_EVENT.UPDATED += self._onComponentUpdated
         
@@ -85,6 +87,8 @@ class MultiTextPanel:
                     self.currentPanelX = new_x
                     self.currentPanelY = new_y
                     self.wasPositionEdited = True
+
+                    self._schedule_position_save()
                     
                     print_debug("[MultiTextPanel] Panel position updated")
         except Exception as e:
@@ -436,3 +440,22 @@ class MultiTextPanel:
             
         except Exception as e:
             print_error("[MultiTextPanel] Error in force cleanup: %s" % str(e))
+
+
+    def _schedule_position_save(self):
+        try:
+            if hasattr(self, '_save_callback_id') and self._save_callback_id:
+                BigWorld.cancelCallback(self._save_callback_id)
+            self._save_callback_id = BigWorld.callback(2.0, self._delayed_position_save)
+            print_debug("[MultiTextPanel] Position save scheduled")
+        except Exception as e:
+            print_error("[MultiTextPanel] Error scheduling position save: %s" % str(e))
+
+    def _delayed_position_save(self):
+        try:
+            self._save_callback_id = None
+            if self.wasPositionEdited:
+                self.persistParamsIfChanged()
+                print_debug("[MultiTextPanel] Delayed position save completed")
+        except Exception as e:
+            print_error("[MultiTextPanel] Error in delayed position save: %s" % str(e))
