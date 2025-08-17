@@ -2,9 +2,8 @@
 import json
 import os
 from gui.modsSettingsApi import g_modsSettingsApi
-from .utils import print_log, print_error, print_debug
+from .utils import print_error, print_debug
 from .config_param import g_configParams
-from . import g_avgWN8
 
 modLinkage = 'me.under-pressure.calculationelo'
 
@@ -186,7 +185,6 @@ class Config(object):
                         'varName': 'clear-wn8-history',
                         'tooltip': u'{HEADER}Очистити історію WN8{/HEADER}{BODY}Видалити файл з історією записів середнього WN8 ворожої команди. Ця дія незворотна!{/BODY}'
                     },
-                    ,
                     {
                         'type': 'Label',
                         'text': u'Інформація про файл історії середнього WN8',
