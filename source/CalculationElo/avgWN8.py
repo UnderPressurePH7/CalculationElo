@@ -54,20 +54,25 @@ class AvgWN8:
             return 0
         
     def get_avg_team_wn8(self, account_ids):
-        wn8_values = []
-        for account_id in account_ids:
-            wn8 = self._get_recent_wn8(account_id)
-            wn8_values.append(wn8)
-        if not wn8_values:  
+        try:
+            wn8_values = []
+            for account_id in account_ids:
+                wn8 = self._get_recent_wn8(account_id)
+                wn8_values.append(wn8)
+            if not wn8_values:
+                return 0
+            avgTeamWN8 = round(sum(wn8_values) / len(wn8_values), 0)
+            return int(avgTeamWN8)
+        except Exception as e:
+            print_error("Error while calculating average team WN8: {}".format(str(e)))
             return 0
-        avgTeamWN8 = round(sum(wn8_values) / len(wn8_values), 0)
-        return int(avgTeamWN8)
-
 
     def save_team_wn8_history(self, avg_wn8):
         if not g_configParams.recordAvgTeamWn8.value:
             return
         try:
+            if avg_wn8 == 0:
+                return
             self._ensure_config_directory()
             
             from datetime import datetime
