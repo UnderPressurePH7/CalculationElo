@@ -535,7 +535,7 @@ class MultiTextPanel:
             for component_id in component_ids:
                if g_guiCache.isComponent(component_id):
                     if component_id == 'eloInfoPanel.avgTeamWn8Text':
-                        g_guiFlash.updateComponent(component_id, {'visible': isVisible and self.avgEnemyWn8 > 0 and g_configParams.showAvgTeamWn8.value })
+                        g_guiFlash.updateComponent(component_id, {'visible': isVisible and self.avgEnemyWn8 > 0 })
                     else:
                         g_guiFlash.updateComponent(component_id, {'visible': isVisible})
 
