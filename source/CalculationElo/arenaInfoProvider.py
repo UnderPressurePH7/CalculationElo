@@ -111,6 +111,7 @@ class ArenaInfoProvider():
                         print_debug("[ArenaInfoProvider] Average team WN8: %s" % self.team_info['avg_team_wn8'])
                         try:
                             # g_multiTextPanel.create_text_fields(self.ON_HOTKEY_PRESSED)
+                            g_multiTextPanel.set_panel_visibility(True)
                             print_debug("[ArenaInfoProvider] Updating text fields")
                             
                             g_multiTextPanel.update_text_fields(
@@ -128,6 +129,7 @@ class ArenaInfoProvider():
                         except Exception as ex:
                             print_error("[ArenaInfoProvider] Error creating/updating text fields: %s" % str(ex))
                     else:
+                        g_multiTextPanel.set_panel_visibility(False)
                         print_debug("[ArenaInfoProvider] Invalid GUI type: %d" % self.__guiType)
                 else:
                     print_debug("[ArenaInfoProvider] Mod disabled")

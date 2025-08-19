@@ -59,7 +59,7 @@ class MultiTextPanel:
                     'border': False,
                     'alignX': COMPONENT_ALIGN.LEFT,
                     'alignY': COMPONENT_ALIGN.TOP,
-                    'visible': True
+                    'visible': False
                 })
                 
                 print_debug("[MultiTextPanel] Main panel created successfully")
@@ -516,6 +516,14 @@ class MultiTextPanel:
                     print_debug("[MultiTextPanel] All hotkeys released, hiding panel")
         except Exception as e:
             print_error("[MultiTextPanel] Error in key up handler: %s" % str(e))
+
+    def set_panel_visibility(self, isVisible):
+        try:
+            print_debug("[MultiTextPanel] Setting panel visibility: %s" % isVisible)
+            if g_guiCache.isComponent('eloInfoPanel'):
+                g_guiFlash.updateComponent('eloInfoPanel', {'visible': isVisible})  
+        except Exception as e:
+            print_error("[MultiTextPanel] Error setting panel visibility: %s" % str(e))
 
     def set_component_visibility(self, isVisible):
         try:
