@@ -10,5 +10,5 @@ from .config import g_config
 
 g_clanAPI = ClanAPI()
 g_avgWN8 = AvgWN8()
-g_eloCalc = EloCalc()
 g_multiTextPanel = MultiTextPanel()
+g_eloCalc = EloCalc()

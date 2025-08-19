@@ -111,8 +111,8 @@ class ArenaInfoProvider():
                         print_debug("[ArenaInfoProvider] Average team WN8: %s" % self.team_info['avg_team_wn8'])
                         try:
                             print_debug("[ArenaInfoProvider] Updating/creating text fields")
+                            # g_multiTextPanel.create_text_fields(self.ON_HOTKEY_PRESSED)
                             g_multiTextPanel.update_text_fields(
-                                self.ON_HOTKEY_PRESSED, 
                                 self.team_info['allies'], 
                                 self.team_info['enemies'], 
                                 self.team_info['allies_rating'], 
@@ -166,29 +166,29 @@ class ArenaInfoProvider():
             
             g_config.sync_with_msa()
 
-            # if g_configParams.enabled.value:
-            #     print_debug("[ArenaInfoProvider] Mod enabled, checking GUI type...")
+            if g_configParams.enabled.value:
+                print_debug("[ArenaInfoProvider] Mod enabled, checking GUI type...")
                 
-            #     if self.__guiType in (15, 16):
-            #         print_debug("[ArenaInfoProvider] Valid GUI type, preparing text fields...")
+                # if self.__guiType in (15, 16):
+                #     print_debug("[ArenaInfoProvider] Valid GUI type, preparing text fields...")
                     
-            #         print_debug("[ArenaInfoProvider] Creating/updating text fields with visibility: %s" % self.ON_HOTKEY_PRESSED)
-            #         g_multiTextPanel.create_text_fields(
-            #             self.ON_HOTKEY_PRESSED, 
-            #             self.team_info['allies'], 
-            #             self.team_info['enemies'], 
-            #             self.team_info['allies_rating'], 
-            #             self.team_info['enemies_rating'], 
-            #             self.team_info['elo_plus'], 
-            #             self.team_info['elo_minus'],
-            #             self.team_info['wins_percent'],
-            #             self.team_info['battles_count'],
-            #             self.team_info['avg_team_wn8']
-            #         )
-            #     else:
-            #         print_debug("[ArenaInfoProvider] Invalid GUI type: %d" % self.__guiType)
-            # else:
-            #     print_debug("[ArenaInfoProvider] Mod disabled")
+                #     print_debug("[ArenaInfoProvider] Updating text fields with visibility: %s" % self.ON_HOTKEY_PRESSED)
+                #     g_multiTextPanel.update_text_fields(
+                #         self.ON_HOTKEY_PRESSED, 
+                #         self.team_info['allies'], 
+                #         self.team_info['enemies'], 
+                #         self.team_info['allies_rating'], 
+                #         self.team_info['enemies_rating'], 
+                #         self.team_info['elo_plus'], 
+                #         self.team_info['elo_minus'],
+                #         self.team_info['wins_percent'],
+                #         self.team_info['battles_count'],
+                #         self.team_info['avg_team_wn8']
+                #     )
+                # else:
+                #     print_debug("[ArenaInfoProvider] Invalid GUI type: %d" % self.__guiType)
+            else:
+                print_debug("[ArenaInfoProvider] Mod disabled")
                 
             self.__arena = arena
             

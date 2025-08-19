@@ -2,7 +2,7 @@ import urllib2
 import json
 import time
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 
 def print_log(log):
     print("[CalculationElo]: {}".format(str(log)))

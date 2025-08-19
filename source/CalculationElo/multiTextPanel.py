@@ -18,7 +18,6 @@ class MultiTextPanel:
         print_debug("[MultiTextPanel] Initializing...")
         self.isKeyPressed = False
         self.active_keys = {}
-        self.components_created = False  
 
         self.avgEnemyWn8 = 0
         self.currentPanelX = g_configParams.panelPosition.value[0]
@@ -148,165 +147,170 @@ class MultiTextPanel:
             print_debug("[MultiTextPanel] Creating text fields with visibility: %s" % isVisible)
             
             self._ensure_main_panel()
+            current_y = 5
+            shadow_config = self._getShadowConfig()
 
-            if not self.components_created:
-                print_debug("[MultiTextPanel] Creating components for the first time")
+            if g_configParams.showTitleVisible.value:
+                header_color = g_configParams.headerColor.getHexColor()
+                header_text = '<font face="Tahoma" size="14" color="{0}"><b>-=Calculation Elo=-</b></font>'.format(header_color)
                 
-                current_y = 5
-                shadow_config = self._getShadowConfig()
+                component_props = {
+                    'text': header_text,
+                    'x': 0,
+                    'y': current_y,
+                    'alignX': COMPONENT_ALIGN.CENTER,
+                    'isHtml': True,
+                    'visible': isVisible
+                }
+                if shadow_config:
+                    component_props['shadow'] = shadow_config
                 
-                if g_configParams.showTitleVisible.value:
-                    header_color = g_configParams.headerColor.getHexColor()
-                    header_text = '<font face="Tahoma" size="14" color="{0}"><b>-=Calculation Elo=-</b></font>'.format(header_color)
-                    
-                    component_props = {
-                        'text': header_text,
-                        'x': 0,
-                        'y': current_y,
-                        'alignX': COMPONENT_ALIGN.CENTER,
-                        'isHtml': True,
-                        'visible': isVisible
-                    }
-                    if shadow_config:
-                        component_props['shadow'] = shadow_config
-                    
+                if not g_guiCache.isComponent('eloInfoPanel.headerText'):
                     g_guiFlash.createComponent('eloInfoPanel.headerText', COMPONENT_TYPE.LABEL, component_props)
-                    current_y += 20
+                current_y += 20
 
-                if g_configParams.showTeamNames.value:
-                    allies_color = g_configParams.alliesNamesColor.getHexColor()
-                    enemies_color = g_configParams.enemiesNamesColor.getHexColor()
+            if g_configParams.showTeamNames.value:
+                allies_color = g_configParams.alliesNamesColor.getHexColor()
+                enemies_color = g_configParams.enemiesNamesColor.getHexColor()
 
-                    allies_props = {
-                        'text': '<font face="Tahoma" size="18" color="{0}"><b>ALLY</b></font>'.format(allies_color),
-                        'x': 1,
-                        'y': current_y,
-                        'alignX': COMPONENT_ALIGN.LEFT,
-                        'isHtml': True,
-                        'visible': isVisible
-                    }
-                    if shadow_config:
-                        allies_props['shadow'] = shadow_config
-                    
-                    g_guiFlash.createComponent('eloInfoPanel.alliesNameText', COMPONENT_TYPE.LABEL, allies_props)
-
-                    enemies_props = {
-                        'text': '<font face="Tahoma" size="18" color="{0}"><b>ENEM</b></font>'.format(enemies_color),
-                        'x': -1,
-                        'y': current_y,
-                        'alignX': COMPONENT_ALIGN.RIGHT,
-                        'isHtml': True,
-                        'visible': isVisible
-                    }
-                    if shadow_config:
-                        enemies_props['shadow'] = shadow_config
-                    
-                    g_guiFlash.createComponent('eloInfoPanel.enemiesNameText', COMPONENT_TYPE.LABEL, enemies_props)
-                    current_y += 20
-
-                allies_rating_color = g_configParams.alliesRatingColor.getHexColor()
-                enemies_rating_color = g_configParams.enemiesRatingColor.getHexColor()
-
-                allies_rating_props = {
-                    'text': '<font face="Tahoma" size="18" color="{0}"><b>0000</b></font>'.format(allies_rating_color),
-                    'x': 15,
+                allies_props = {
+                    'text': '<font face="Tahoma" size="18" color="{0}"><b>ALLY</b></font>'.format(allies_color),
+                    'x': 1,
                     'y': current_y,
                     'alignX': COMPONENT_ALIGN.LEFT,
                     'isHtml': True,
                     'visible': isVisible
                 }
                 if shadow_config:
-                    allies_rating_props['shadow'] = shadow_config
-                
-                g_guiFlash.createComponent('eloInfoPanel.alliesRatingText', COMPONENT_TYPE.LABEL, allies_rating_props)
+                    allies_props['shadow'] = shadow_config
 
-                enemies_rating_props = {
-                    'text': '<font face="Tahoma" size="18" color="{0}"><b>0000</b></font>'.format(enemies_rating_color),
-                    'x': -15,
+                if not g_guiCache.isComponent('eloInfoPanel.alliesNameText'):
+                    g_guiFlash.createComponent('eloInfoPanel.alliesNameText', COMPONENT_TYPE.LABEL, allies_props)
+
+                enemies_props = {
+                    'text': '<font face="Tahoma" size="18" color="{0}"><b>ENEM</b></font>'.format(enemies_color),
+                    'x': -1,
                     'y': current_y,
                     'alignX': COMPONENT_ALIGN.RIGHT,
                     'isHtml': True,
                     'visible': isVisible
                 }
                 if shadow_config:
-                    enemies_rating_props['shadow'] = shadow_config
-                
-                g_guiFlash.createComponent('eloInfoPanel.enemiesRatingText', COMPONENT_TYPE.LABEL, enemies_rating_props)
-                current_y += 21
-
-                if g_configParams.showEloChanges.value:
-                    elo_gain_color = g_configParams.eloGainColor.getHexColor()
-                    elo_loss_color = g_configParams.eloLossColor.getHexColor()
-
-                    elo_plus_props = {
-                        'text': '<font face="Tahoma" size="14" color="{0}"><b>+0</b></font>'.format(elo_gain_color),
-                        'x': 30,
-                        'y': current_y,
-                        'alignX': COMPONENT_ALIGN.LEFT,
-                        'isHtml': True,
-                        'visible': isVisible
-                    }
-                    if shadow_config:
-                        elo_plus_props['shadow'] = shadow_config
+                    enemies_props['shadow'] = shadow_config
                     
+                if not g_guiCache.isComponent('eloInfoPanel.enemiesNameText'):
+                    g_guiFlash.createComponent('eloInfoPanel.enemiesNameText', COMPONENT_TYPE.LABEL, enemies_props)
+                current_y += 20
+
+            allies_rating_color = g_configParams.alliesRatingColor.getHexColor()
+            enemies_rating_color = g_configParams.enemiesRatingColor.getHexColor()
+
+            allies_rating_props = {
+                'text': '<font face="Tahoma" size="18" color="{0}"><b>0000</b></font>'.format(allies_rating_color),
+                'x': 15,
+                'y': current_y,
+                'alignX': COMPONENT_ALIGN.LEFT,
+                'isHtml': True,
+                'visible': isVisible
+            }
+            if shadow_config:
+                allies_rating_props['shadow'] = shadow_config
+
+            if not g_guiCache.isComponent('eloInfoPanel.alliesRatingText'):
+                g_guiFlash.createComponent('eloInfoPanel.alliesRatingText', COMPONENT_TYPE.LABEL, allies_rating_props)
+
+            enemies_rating_props = {
+                'text': '<font face="Tahoma" size="18" color="{0}"><b>0000</b></font>'.format(enemies_rating_color),
+                'x': -15,
+                'y': current_y,
+                'alignX': COMPONENT_ALIGN.RIGHT,
+                'isHtml': True,
+                'visible': isVisible
+            }
+            if shadow_config:
+                enemies_rating_props['shadow'] = shadow_config
+
+            if not g_guiCache.isComponent('eloInfoPanel.enemiesRatingText'):
+                g_guiFlash.createComponent('eloInfoPanel.enemiesRatingText', COMPONENT_TYPE.LABEL, enemies_rating_props)
+            current_y += 21
+
+            if g_configParams.showEloChanges.value:
+                elo_gain_color = g_configParams.eloGainColor.getHexColor()
+                elo_loss_color = g_configParams.eloLossColor.getHexColor()
+
+                elo_plus_props = {
+                    'text': '<font face="Tahoma" size="14" color="{0}"><b>+0</b></font>'.format(elo_gain_color),
+                    'x': 30,
+                    'y': current_y,
+                    'alignX': COMPONENT_ALIGN.LEFT,
+                    'isHtml': True,
+                    'visible': isVisible
+                }
+                if shadow_config:
+                    elo_plus_props['shadow'] = shadow_config
+                
+                if not g_guiCache.isComponent('eloInfoPanel.eloPlusText'):
                     g_guiFlash.createComponent('eloInfoPanel.eloPlusText', COMPONENT_TYPE.LABEL, elo_plus_props)
 
-                    elo_minus_props = {
-                        'text': '<font face="Tahoma" size="14" color="{0}"><b>-0</b></font>'.format(elo_loss_color),
-                        'x': -30,
-                        'y': current_y,
-                        'alignX': COMPONENT_ALIGN.RIGHT,
-                        'isHtml': True,
-                        'visible': isVisible
-                    }
-                    if shadow_config:
-                        elo_minus_props['shadow'] = shadow_config
-                    
+                elo_minus_props = {
+                    'text': '<font face="Tahoma" size="14" color="{0}"><b>-0</b></font>'.format(elo_loss_color),
+                    'x': -30,
+                    'y': current_y,
+                    'alignX': COMPONENT_ALIGN.RIGHT,
+                    'isHtml': True,
+                    'visible': isVisible
+                }
+                if shadow_config:
+                    elo_minus_props['shadow'] = shadow_config
+
+                if not g_guiCache.isComponent('eloInfoPanel.eloMinusText'):
                     g_guiFlash.createComponent('eloInfoPanel.eloMinusText', COMPONENT_TYPE.LABEL, elo_minus_props)
-                    current_y += 17
+                current_y += 17
 
-                if g_configParams.showWinrateAndBattles.value:
-                    winrate_color = g_configParams.winrateColor.getHexColor()
-                    battles_color = g_configParams.battlesColor.getHexColor()
-                    stats_text = '<font face="Tahoma" size="14" color="{0}"><b>0</b></font> <font face="Tahoma" size="14" color="{1}"><b>(0%)</b></font>'.format(battles_color, winrate_color)
-                    
-                    stats_props = {
-                        'text': stats_text,
-                        'x': 0,
-                        'y': current_y,
-                        'alignX': COMPONENT_ALIGN.CENTER,
-                        'isHtml': True,
-                        'visible': isVisible
-                    }
-                    if shadow_config:
-                        stats_props['shadow'] = shadow_config
-                    
-                    g_guiFlash.createComponent('eloInfoPanel.statsText', COMPONENT_TYPE.LABEL, stats_props)
-                    current_y += 17
-
+            if g_configParams.showWinrateAndBattles.value:
+                winrate_color = g_configParams.winrateColor.getHexColor()
+                battles_color = g_configParams.battlesColor.getHexColor()
+                stats_text = '<font face="Tahoma" size="14" color="{0}"><b>0</b></font> <font face="Tahoma" size="14" color="{1}"><b>(0%)</b></font>'.format(battles_color, winrate_color)
                 
-                if g_configParams.showAvgTeamWn8.value :
-                    avg_wn8_color = g_configParams.avgWN8Color.getHexColor()
+                stats_props = {
+                    'text': stats_text,
+                    'x': 0,
+                    'y': current_y,
+                    'alignX': COMPONENT_ALIGN.CENTER,
+                    'isHtml': True,
+                    'visible': isVisible
+                }
+                if shadow_config:
+                    stats_props['shadow'] = shadow_config
 
-                    avg_wn8_props = {
-                        'text': '<font face="Tahoma" size="14" color="{0}"><b>wn8 0</b></font>'.format(avg_wn8_color),
-                        'x': 0,
-                        'y': current_y,
-                        'alignX': COMPONENT_ALIGN.CENTER,
-                        'isHtml': True,
-                        'visible': isVisible
-                    }
-                    if shadow_config:
-                        avg_wn8_props['shadow'] = shadow_config
-                    
+                if not g_guiCache.isComponent('eloInfoPanel.statsText'):
+                    g_guiFlash.createComponent('eloInfoPanel.statsText', COMPONENT_TYPE.LABEL, stats_props)
+                current_y += 17
+
+            if g_configParams.showAvgTeamWn8.value:
+                avg_wn8_color = g_configParams.avgWN8Color.getHexColor()
+
+                avg_wn8_props = {
+                    'text': '<font face="Tahoma" size="14" color="{0}"><b>wn8 0</b></font>'.format(avg_wn8_color),
+                    'x': 0,
+                    'y': current_y,
+                    'alignX': COMPONENT_ALIGN.CENTER,
+                    'isHtml': True,
+                    'visible': isVisible
+                }
+                if shadow_config:
+                    avg_wn8_props['shadow'] = shadow_config
+
+                if not g_guiCache.isComponent('eloInfoPanel.avgTeamWn8Text'):
                     g_guiFlash.createComponent('eloInfoPanel.avgTeamWn8Text', COMPONENT_TYPE.LABEL, avg_wn8_props)
 
-                self.components_created = True
-                print_debug("[MultiTextPanel] All components created successfully")
+            print_debug("[MultiTextPanel] All components created successfully")
+
             # self.update_text_fields(allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count, avg_team_wn8)
 
         except Exception as e:
             print_error("[MultiTextPanel] Error creating text fields: %s" % str(e))
+
 
     def update_text_fields(self, allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count, avg_team_wn8):
         try:
@@ -332,9 +336,6 @@ class MultiTextPanel:
                 except Exception as e:
                     print_debug("[MultiTextPanel] Could not delete component %s: %s" % (component_id, str(e)))
 
-            if not self.components_created:
-                print_debug("[MultiTextPanel] Components not created yet, skipping update")
-                return
             shadow_config = self._getShadowConfig()
             
             if g_configParams.showTitleVisible.value and g_guiCache.isComponent('eloInfoPanel.headerText'):
@@ -578,7 +579,6 @@ class MultiTextPanel:
 
             self.isKeyPressed = False
             self.active_keys = {}
-            self.components_created = False  
             
             component_ids = [
                 'eloInfoPanel.headerText',
@@ -624,3 +624,4 @@ class MultiTextPanel:
                 print_debug("[MultiTextPanel] Delayed position save completed")
         except Exception as e:
             print_error("[MultiTextPanel] Error in delayed position save: %s" % str(e))
+
