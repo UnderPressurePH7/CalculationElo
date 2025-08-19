@@ -49,7 +49,6 @@ class MultiTextPanel:
         try:
             if not g_guiCache.isComponent('eloInfoPanel'): 
                 print_debug("[MultiTextPanel] Creating main panel component...")
-                
                 g_guiFlash.createComponent('eloInfoPanel', COMPONENT_TYPE.PANEL, {
                     'x': self.currentPanelX,
                     'y': self.currentPanelY,
@@ -144,7 +143,7 @@ class MultiTextPanel:
                 'quality': 1
             }
 
-    def create_text_fields(self, isVisible, allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count, avg_team_wn8):
+    def create_text_fields(self, isVisible):
         try:
             print_debug("[MultiTextPanel] Creating text fields with visibility: %s" % isVisible)
             
@@ -285,7 +284,7 @@ class MultiTextPanel:
                     g_guiFlash.createComponent('eloInfoPanel.statsText', COMPONENT_TYPE.LABEL, stats_props)
                     current_y += 17
 
-                self.avgEnemyWn8 = avg_team_wn8
+                
                 if g_configParams.showAvgTeamWn8.value :
                     avg_wn8_color = g_configParams.avgWN8Color.getHexColor()
 
@@ -304,7 +303,7 @@ class MultiTextPanel:
 
                 self.components_created = True
                 print_debug("[MultiTextPanel] All components created successfully")
-            self.update_text_fields(allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count, avg_team_wn8)
+            # self.update_text_fields(allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count, avg_team_wn8)
 
         except Exception as e:
             print_error("[MultiTextPanel] Error creating text fields: %s" % str(e))
@@ -312,11 +311,30 @@ class MultiTextPanel:
     def update_text_fields(self, allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count, avg_team_wn8):
         try:
             print_debug("[MultiTextPanel] Updating text fields")
+
+            component_ids = [
+                'eloInfoPanel.headerText',
+                'eloInfoPanel.alliesNameText',
+                'eloInfoPanel.enemiesNameText', 
+                'eloInfoPanel.alliesRatingText',
+                'eloInfoPanel.enemiesRatingText',
+                'eloInfoPanel.eloPlusText',
+                'eloInfoPanel.eloMinusText',
+                'eloInfoPanel.statsText',
+                'eloInfoPanel.avgTeamWn8Text',
+                'eloInfoPanel' 
+            ]
             
+            for component_id in component_ids:
+                try:
+                    if not g_guiCache.isComponent(component_id):
+                        self.create_text_fields(True)
+                except Exception as e:
+                    print_debug("[MultiTextPanel] Could not delete component %s: %s" % (component_id, str(e)))
+
             if not self.components_created:
                 print_debug("[MultiTextPanel] Components not created yet, skipping update")
                 return
-
             shadow_config = self._getShadowConfig()
             
             if g_configParams.showTitleVisible.value and g_guiCache.isComponent('eloInfoPanel.headerText'):
@@ -498,13 +516,32 @@ class MultiTextPanel:
                 'eloInfoPanel.statsText',
                 'eloInfoPanel.avgTeamWn8Text'
             ]
-            
             for component_id in component_ids:
-                if g_guiCache.isComponent(component_id):
+               if g_guiCache.isComponent(component_id):
                     if component_id == 'eloInfoPanel.avgTeamWn8Text':
-                        g_guiFlash.updateComponent(component_id, {'visible': isVisible and self.avgEnemyWn8 > 0})
+                        g_guiFlash.updateComponent(component_id, {'visible': isVisible and self.avgEnemyWn8 > 0 and g_configParams.showAvgTeamWn8.value })
                     else:
                         g_guiFlash.updateComponent(component_id, {'visible': isVisible})
+
+
+            # for component_id in component_ids:
+            #     if g_guiCache.isComponent(component_id):
+            #         if component_id == 'eloInfoPanel.headerText':
+            #             g_guiFlash.updateComponent(component_id, {'visible': isVisible and g_configParams.showTitleVisible.value})
+            #         if component_id == 'eloInfoPanel.alliesNameText':
+            #             g_guiFlash.updateComponent(component_id, {'visible': isVisible and g_configParams.showTeamNames.value})
+            #         if component_id == 'eloInfoPanel.enemiesNameText':
+            #             g_guiFlash.updateComponent(component_id, {'visible': isVisible and g_configParams.showTeamNames.value})
+            #         if component_id == 'eloInfoPanel.eloPlusText':
+            #             g_guiFlash.updateComponent(component_id, {'visible': isVisible and g_configParams.showEloChanges.value})
+            #         if component_id == 'eloInfoPanel.eloMinusText':
+            #             g_guiFlash.updateComponent(component_id, {'visible': isVisible and g_configParams.showEloChanges.value})
+            #         if component_id == 'eloInfoPanel.statsText':
+            #             g_guiFlash.updateComponent(component_id, {'visible': isVisible and g_configParams.showWinrateAndBattles.value})
+            #         if component_id == 'eloInfoPanel.avgTeamWn8Text':
+            #             g_guiFlash.updateComponent(component_id, {'visible': isVisible and self.avgEnemyWn8 > 0 and g_configParams.showAvgTeamWn8.value })
+            #         else:
+            #             g_guiFlash.updateComponent(component_id, {'visible': isVisible})
 
             print_debug("[MultiTextPanel] Component visibility updated successfully")
         except Exception as e:

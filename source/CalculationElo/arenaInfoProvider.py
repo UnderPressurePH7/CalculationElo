@@ -32,18 +32,7 @@ class ArenaInfoProvider():
 
         try:
             print_debug("[ArenaInfoProvider] Creating text fields")
-            g_multiTextPanel.create_text_fields(
-            self.ON_HOTKEY_PRESSED, 
-            self.team_info['allies'], 
-            self.team_info['enemies'], 
-            self.team_info['allies_rating'], 
-            self.team_info['enemies_rating'], 
-            self.team_info['elo_plus'], 
-            self.team_info['elo_minus'], 
-            self.team_info['wins_percent'], 
-            self.team_info['battles_count'],
-            self.team_info['avg_team_wn8']
-        )
+            g_multiTextPanel.create_text_fields(self.ON_HOTKEY_PRESSED)
 
         except Exception as ex:
             print_error("[ArenaInfoProvider] Error creating text fields: %s" % str(ex))
@@ -122,7 +111,7 @@ class ArenaInfoProvider():
                         print_debug("[ArenaInfoProvider] Average team WN8: %s" % self.team_info['avg_team_wn8'])
                         try:
                             print_debug("[ArenaInfoProvider] Updating/creating text fields")
-                            g_multiTextPanel.create_text_fields(
+                            g_multiTextPanel.update_text_fields(
                                 self.ON_HOTKEY_PRESSED, 
                                 self.team_info['allies'], 
                                 self.team_info['enemies'], 
