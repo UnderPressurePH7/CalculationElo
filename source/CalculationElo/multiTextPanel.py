@@ -18,6 +18,7 @@ class MultiTextPanel:
         print_debug("[MultiTextPanel] Initializing...")
         self.isKeyPressed = False
         self.active_keys = {}
+        self.is_creating_text_fields = False
 
         self.avgEnemyWn8 = 0
         self.currentPanelX = g_configParams.panelPosition.value[0]
@@ -146,7 +147,15 @@ class MultiTextPanel:
         try:
             print_debug("[MultiTextPanel] Creating text fields with visibility: %s" % isVisible)
             
-            self._ensure_main_panel()
+            if not g_guiCache.isComponent('eloInfoPanel'):
+                print_error("[MultiTextPanel] Main panel does not exist, cannot create text fields")
+                return
+            
+            if self.is_creating_text_fields:
+                print_debug("[MultiTextPanel] Text fields are already being created")
+                return
+
+            self.is_creating_text_fields = True
             current_y = 5
             shadow_config = self._getShadowConfig()
 
@@ -197,7 +206,7 @@ class MultiTextPanel:
                 }
                 if shadow_config:
                     enemies_props['shadow'] = shadow_config
-                    
+
                 if not g_guiCache.isComponent('eloInfoPanel.enemiesNameText'):
                     g_guiFlash.createComponent('eloInfoPanel.enemiesNameText', COMPONENT_TYPE.LABEL, enemies_props)
                 current_y += 20
@@ -306,36 +315,42 @@ class MultiTextPanel:
 
             print_debug("[MultiTextPanel] All components created successfully")
 
+            self.is_creating_text_fields = True
             # self.update_text_fields(allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count, avg_team_wn8)
 
         except Exception as e:
             print_error("[MultiTextPanel] Error creating text fields: %s" % str(e))
+            self.is_creating_text_fields = False
 
 
     def update_text_fields(self, allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count, avg_team_wn8):
         try:
             print_debug("[MultiTextPanel] Updating text fields")
 
-            component_ids = [
-                'eloInfoPanel.headerText',
-                'eloInfoPanel.alliesNameText',
-                'eloInfoPanel.enemiesNameText', 
-                'eloInfoPanel.alliesRatingText',
-                'eloInfoPanel.enemiesRatingText',
-                'eloInfoPanel.eloPlusText',
-                'eloInfoPanel.eloMinusText',
-                'eloInfoPanel.statsText',
-                'eloInfoPanel.avgTeamWn8Text',
-                'eloInfoPanel' 
-            ]
+            # component_ids = [
+            #     'eloInfoPanel.headerText',
+            #     'eloInfoPanel.alliesNameText',
+            #     'eloInfoPanel.enemiesNameText', 
+            #     'eloInfoPanel.alliesRatingText',
+            #     'eloInfoPanel.enemiesRatingText',
+            #     'eloInfoPanel.eloPlusText',
+            #     'eloInfoPanel.eloMinusText',
+            #     'eloInfoPanel.statsText',
+            #     'eloInfoPanel.avgTeamWn8Text',
+            #     'eloInfoPanel' 
+            # ]
             
-            for component_id in component_ids:
-                try:
-                    if not g_guiCache.isComponent(component_id):
-                        self.create_text_fields(True)
-                except Exception as e:
-                    print_debug("[MultiTextPanel] Could not delete component %s: %s" % (component_id, str(e)))
-
+            # for component_id in component_ids:
+            #     try:
+            #         if not g_guiCache.isComponent(component_id):
+            #             self.create_text_fields(True)
+            #     except Exception as e:
+            #         print_debug("[MultiTextPanel] Could not delete component %s: %s" % (component_id, str(e)))
+            
+            if not self.is_creating_text_fields:
+                print_debug("[MultiTextPanel] Text fields are not created yet, cannot update")
+                return
+            
             shadow_config = self._getShadowConfig()
             
             if g_configParams.showTitleVisible.value and g_guiCache.isComponent('eloInfoPanel.headerText'):

@@ -110,7 +110,7 @@ class ArenaInfoProvider():
                         g_avgWN8.save_team_wn8_history(self.team_info['avg_team_wn8'], self.team_info['enemies'], self.team_info['enemies_rating'])
                         print_debug("[ArenaInfoProvider] Average team WN8: %s" % self.team_info['avg_team_wn8'])
                         try:
-                            print_debug("[ArenaInfoProvider] Updating/creating text fields")
+                            print_debug("[ArenaInfoProvider] Updating text fields")
                             # g_multiTextPanel.create_text_fields(self.ON_HOTKEY_PRESSED)
                             g_multiTextPanel.update_text_fields(
                                 self.team_info['allies'], 

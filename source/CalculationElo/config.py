@@ -286,10 +286,16 @@ class Config(object):
 
     def _notify_config_changed(self):
         try:
-            from . import g_arenaInfoProvider
-            if g_arenaInfoProvider and hasattr(g_arenaInfoProvider, 'on_config_changed'):
-                g_arenaInfoProvider.on_config_changed()
-                print_debug("Config change notification sent")
+            from gui.mods.mod_calcElo import g_arenaInfoProvider
+            if g_arenaInfoProvider:
+                from CalculationElo import g_multiTextPanel
+                if g_multiTextPanel:
+                    if hasattr(g_multiTextPanel, 'is_creating_text_fields'):
+                        g_multiTextPanel.is_creating_text_fields = False
+                        g_multiTextPanel.create_text_fields(g_arenaInfoProvider.ON_HOTKEY_PRESSED)
+                        print_debug("Config change notification sent")
+                    else:
+                        print_debug("Text panel not ready for config update")
         except Exception as e:
             print_error("Error notifying config change: %s" % str(e))
 
