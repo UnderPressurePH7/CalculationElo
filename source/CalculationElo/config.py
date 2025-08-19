@@ -279,6 +279,7 @@ class Config(object):
             from . import g_multiTextPanel
             if g_multiTextPanel:
                 g_multiTextPanel.is_creating_text_fields = False
+                g_multiTextPanel.create_text_fields(False)
                 print_debug("Config change notification sent")
         except Exception as e:
             print_error("Error notifying config change: %s" % str(e))
