@@ -71,9 +71,6 @@ class Config(object):
             print_debug("Config saved successfully")
         except Exception as e:
             print_error("Error saving config: %s" % str(e))
-            
-
-    #         return False
 
             
     def _get_safe_msa_value(self, param):
@@ -159,14 +156,7 @@ class Config(object):
                         'value': g_configParams.recordAvgTeamWn8.defaultMsaValue,
                         'varName': 'record-avg-team-wn8',
                         'tooltip': u'{HEADER}Записувати історію середнього Wn8{/HEADER}{BODY}Записувати історію середнього Wn8 ворожої команди{/BODY}'
-                    },
-                    # {
-                    #     'type': 'HotKey',
-                    #     'text': u'Клавіша для очищення історії WN8',
-                    #     'value': g_configParams.clearWn8History.defaultMsaValue,
-                    #     'varName': 'clear-wn8-history',
-                    #     'tooltip': u'{HEADER}Очищує історію WN8{/HEADER}{BODY}При натисканні видаляється файл з історією записів середнього WN8 ворожої команди. Ця дія незворотна!{/BODY}'
-                    # },   
+                    }, 
                     {
                         'type': 'Label',
                         'text': u'Інформація про файл історії середнього WN8',
@@ -286,16 +276,10 @@ class Config(object):
 
     def _notify_config_changed(self):
         try:
-            from gui.mods.mod_calcElo import g_arenaInfoProvider
-            if g_arenaInfoProvider:
-                from CalculationElo import g_multiTextPanel
-                if g_multiTextPanel:
-                    if hasattr(g_multiTextPanel, 'is_creating_text_fields'):
-                        g_multiTextPanel.is_creating_text_fields = False
-                        g_multiTextPanel.create_text_fields(g_arenaInfoProvider.ON_HOTKEY_PRESSED)
-                        print_debug("Config change notification sent")
-                    else:
-                        print_debug("Text panel not ready for config update")
+            from . import g_multiTextPanel
+            if g_multiTextPanel:
+                g_multiTextPanel.is_creating_text_fields = False
+                print_debug("Config change notification sent")
         except Exception as e:
             print_error("Error notifying config change: %s" % str(e))
 
