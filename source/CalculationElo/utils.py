@@ -2,7 +2,7 @@ import urllib2
 import json
 import time
 
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 def print_log(log):
     print("[CalculationElo]: {}".format(str(log)))
@@ -33,4 +33,4 @@ def fetch_data_with_retry(url, retries=2, delay=5):
         except Exception as e:
             print_error("Unexpected error: {}".format(e))
             break
-    return None
+        return None

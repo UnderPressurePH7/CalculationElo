@@ -323,30 +323,10 @@ class MultiTextPanel:
             self.is_creating_text_fields = False
 
 
-    def update_text_fields(self, allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count, avg_team_wn8):
+    def update_text_fields(self, allies, enemies, allies_rating, enemies_rating, eloPlus, eloMinus, wins_percent, battles_count):
         try:
             print_debug("[MultiTextPanel] Updating text fields")
 
-            # component_ids = [
-            #     'eloInfoPanel.headerText',
-            #     'eloInfoPanel.alliesNameText',
-            #     'eloInfoPanel.enemiesNameText', 
-            #     'eloInfoPanel.alliesRatingText',
-            #     'eloInfoPanel.enemiesRatingText',
-            #     'eloInfoPanel.eloPlusText',
-            #     'eloInfoPanel.eloMinusText',
-            #     'eloInfoPanel.statsText',
-            #     'eloInfoPanel.avgTeamWn8Text',
-            #     'eloInfoPanel' 
-            # ]
-            
-            # for component_id in component_ids:
-            #     try:
-            #         if not g_guiCache.isComponent(component_id):
-            #             self.create_text_fields(True)
-            #     except Exception as e:
-            #         print_debug("[MultiTextPanel] Could not delete component %s: %s" % (component_id, str(e)))
-            
             if not self.is_creating_text_fields:
                 print_debug("[MultiTextPanel] Text fields are not created yet, cannot update")
                 return
@@ -451,24 +431,33 @@ class MultiTextPanel:
                 
                 g_guiFlash.updateComponent('eloInfoPanel.statsText', update_props)
 
-            self.avgEnemyWn8 = avg_team_wn8
-            if g_configParams.showAvgTeamWn8.value and g_guiCache.isComponent('eloInfoPanel.avgTeamWn8Text'):
-                avg_wn8_color = g_configParams.avgWN8Color.getHexColor()
-                # avg_team_wn8_str = str(avg_team_wn8).zfill(4) if avg_team_wn8 else "0000"
-                avg_team_wn8_str = str(avg_team_wn8) if avg_team_wn8 else "0"
-                
-                avg_wn8_text = '<font face="Tahoma" size="14" color="{0}"><b>wn8 {1}</b></font>'.format(avg_wn8_color, avg_team_wn8_str)
- 
-                update_props = {'text': avg_wn8_text , 'visible': avg_team_wn8 > 0}
-                if shadow_config:
-                    update_props['shadow'] = shadow_config
-                
-                g_guiFlash.updateComponent('eloInfoPanel.avgTeamWn8Text', update_props)
-
             print_debug("[MultiTextPanel] Text fields updated successfully")
             
         except Exception as e:
             print_error("[MultiTextPanel] Error updating text fields: %s" % str(e))
+
+    def update_avg_wn8_display(self, avg_wn8):
+        try:
+            print_debug("[MultiTextPanel] Updating WN8 display with value: %s" % avg_wn8)
+            
+            self.avgEnemyWn8 = avg_wn8
+            
+            if g_configParams.showAvgTeamWn8.value and g_guiCache.isComponent('eloInfoPanel.avgTeamWn8Text'):
+                avg_wn8_color = g_configParams.avgWN8Color.getHexColor()
+                avg_team_wn8_str = str(avg_wn8) if avg_wn8 else "0"
+                
+                avg_wn8_text = '<font face="Tahoma" size="14" color="{0}"><b>wn8 {1}</b></font>'.format(avg_wn8_color, avg_team_wn8_str)
+
+                shadow_config = self._getShadowConfig()
+                update_props = {'text': avg_wn8_text, 'visible': avg_wn8 > 0}
+                if shadow_config:
+                    update_props['shadow'] = shadow_config
+                
+                g_guiFlash.updateComponent('eloInfoPanel.avgTeamWn8Text', update_props)
+                print_debug("[MultiTextPanel] WN8 display updated successfully")
+            
+        except Exception as e:
+            print_error("[MultiTextPanel] Error updating WN8 display: %s" % str(e))
 
     def start_key_held(self, elo_visible):
         try:

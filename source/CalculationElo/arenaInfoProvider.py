@@ -103,13 +103,31 @@ class ArenaInfoProvider():
 
                         self.team_info['wins_percent'], self.team_info['battles_count'] = g_clanAPI.get_for_last_28_days(self.team_info['id_enemies'], self.__tank_tier, self.__guiType)
                         print_debug("[ArenaInfoProvider] Last 28 days - wins percent: %s, battles count: %s" % (self.team_info['wins_percent'], self.team_info['battles_count']))
-                        
+
                         if g_configParams.showAvgTeamWn8.value or g_configParams.recordAvgTeamWn8.value:
                             self.set_account_ids_in_battle(vehicles)
                             print_debug("[ArenaInfoProvider] Account IDs in battle set: %s" % self.account_ids)
-                            self.team_info['avg_team_wn8'] = g_avgWN8.get_avg_team_wn8(self.account_ids)
-                            g_avgWN8.save_team_wn8_history(self.team_info['avg_team_wn8'], self.team_info['enemies'], self.team_info['enemies_rating'])
-                            print_debug("[ArenaInfoProvider] Average team WN8: %s" % self.team_info['avg_team_wn8'])
+                            
+                            def wn8_callback(avg_wn8):
+                                try:
+                                    print_debug("[ArenaInfoProvider] Received async WN8 result: %s" % avg_wn8)
+                                    self.team_info['avg_team_wn8'] = avg_wn8
+                                    
+                                    g_avgWN8.save_team_wn8_history(avg_wn8, self.team_info['enemies'], self.team_info['enemies_rating'])
+
+                                    if g_configParams.showAvgTeamWn8.value and avg_wn8 > 0:
+                                        try:
+                                            g_multiTextPanel.update_avg_wn8_display(avg_wn8)
+                                            print_debug("[ArenaInfoProvider] WN8 display updated with async result")
+                                        except Exception as e:
+                                            print_error("[ArenaInfoProvider] Error updating WN8 display: %s" % str(e))
+                                            
+                                except Exception as e:
+                                    print_error("[ArenaInfoProvider] Error in WN8 callback: %s" % str(e))
+
+                            g_avgWN8.get_avg_team_wn8(self.account_ids, wn8_callback)
+                            self.team_info['avg_team_wn8'] = 0 
+
                         
                         try:
                             g_multiTextPanel.set_panel_visibility(True)
@@ -124,9 +142,9 @@ class ArenaInfoProvider():
                                 self.team_info['elo_minus'], 
                                 self.team_info['wins_percent'], 
                                 self.team_info['battles_count'],
-                                self.team_info['avg_team_wn8']
+                                
                             )
-
+                            self.team_info['avg_team_wn8']
                         except Exception as ex:
                             print_error("[ArenaInfoProvider] Error creating/updating text fields: %s" % str(ex))
                     else:
@@ -148,6 +166,7 @@ class ArenaInfoProvider():
                           'avg_team_wn8': None }
 
         try:
+            g_avgWN8.clear_wn8_cache()
             g_multiTextPanel.persistParamsIfChanged() 
             g_multiTextPanel.delete_all_component() 
             print_debug("[ArenaInfoProvider] Components hidden successfully")
