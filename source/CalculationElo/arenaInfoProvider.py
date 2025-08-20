@@ -96,10 +96,11 @@ class ArenaInfoProvider():
                         self.team_info['enemies_rating'] = g_clanAPI.get_clan_rating(self.team_info['id_enemies'], self.__tank_tier, self.__guiType)
                         print_debug("[ArenaInfoProvider] Ratings - allies: %s, enemies: %s" % (self.team_info['allies_rating'], self.team_info['enemies_rating']))
                         
-                        Elo = g_eloCalc.calculate_elo_changes(self.team_info['allies_rating'], self.team_info['enemies_rating'])
-                        self.team_info['elo_plus'] = Elo[0]
-                        self.team_info['elo_minus'] = Elo[1]
-                        print_debug("[ArenaInfoProvider] ELO changes - plus: %s, minus: %s" % (self.team_info['elo_plus'], self.team_info['elo_minus']))
+                        if g_configParams.showEloChanges.value:
+                            Elo = g_eloCalc.calculate_elo_changes(self.team_info['allies_rating'], self.team_info['enemies_rating'])
+                            self.team_info['elo_plus'] = Elo[0]
+                            self.team_info['elo_minus'] = Elo[1]
+                            print_debug("[ArenaInfoProvider] ELO changes - plus: %s, minus: %s" % (self.team_info['elo_plus'], self.team_info['elo_minus']))
 
                         if g_configParams.showWinrateAndBattles.value:
                             self.team_info['wins_percent'], self.team_info['battles_count'] = g_clanAPI.get_for_last_28_days(self.team_info['id_enemies'], self.__tank_tier, self.__guiType)
