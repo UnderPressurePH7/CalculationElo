@@ -101,8 +101,9 @@ class ArenaInfoProvider():
                         self.team_info['elo_minus'] = Elo[1]
                         print_debug("[ArenaInfoProvider] ELO changes - plus: %s, minus: %s" % (self.team_info['elo_plus'], self.team_info['elo_minus']))
 
-                        self.team_info['wins_percent'], self.team_info['battles_count'] = g_clanAPI.get_for_last_28_days(self.team_info['id_enemies'], self.__tank_tier, self.__guiType)
-                        print_debug("[ArenaInfoProvider] Last 28 days - wins percent: %s, battles count: %s" % (self.team_info['wins_percent'], self.team_info['battles_count']))
+                        if g_configParams.showWinrateAndBattles.value:
+                            self.team_info['wins_percent'], self.team_info['battles_count'] = g_clanAPI.get_for_last_28_days(self.team_info['id_enemies'], self.__tank_tier, self.__guiType)
+                            print_debug("[ArenaInfoProvider] Last 28 days - wins percent: %s, battles count: %s" % (self.team_info['wins_percent'], self.team_info['battles_count']))
 
                         if g_configParams.showAvgTeamWn8.value or g_configParams.recordAvgTeamWn8.value:
                             self.set_account_ids_in_battle(vehicles)
