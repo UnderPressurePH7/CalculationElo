@@ -390,7 +390,8 @@ class MultiTextPanel:
             allies_rating_color = g_configParams.alliesRatingColor.getHexColor()
             enemies_rating_color = g_configParams.enemiesRatingColor.getHexColor()
 
-            allies_rating_str = str(allies_rating).zfill(4) if allies_rating else "0000"
+            # allies_rating_str = str(allies_rating).zfill(4) if allies_rating else "0000"
+            allies_rating_str = str(allies_rating) if allies_rating else "0"
             if g_guiCache.isComponent('eloInfoPanel.alliesRatingText'):
                 allies_rating_text = '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font>'.format(allies_rating_color, allies_rating_str)
                 
@@ -400,7 +401,8 @@ class MultiTextPanel:
                 
                 g_guiFlash.updateComponent('eloInfoPanel.alliesRatingText', update_props)
 
-            enemies_rating_str = str(enemies_rating).zfill(4) if enemies_rating else "0000"
+            # enemies_rating_str = str(enemies_rating).zfill(4) if enemies_rating else "0000"
+            enemies_rating_str = str(enemies_rating) if enemies_rating else "0"
             if g_guiCache.isComponent('eloInfoPanel.enemiesRatingText'):
                 enemies_rating_text = '<font face="Tahoma" size="18" color="{0}"><b>{1}</b></font>'.format(enemies_rating_color, enemies_rating_str)
                 
@@ -452,7 +454,8 @@ class MultiTextPanel:
             self.avgEnemyWn8 = avg_team_wn8
             if g_configParams.showAvgTeamWn8.value and g_guiCache.isComponent('eloInfoPanel.avgTeamWn8Text'):
                 avg_wn8_color = g_configParams.avgWN8Color.getHexColor()
-                avg_team_wn8_str = str(avg_team_wn8).zfill(4) if avg_team_wn8 else "0000"
+                # avg_team_wn8_str = str(avg_team_wn8).zfill(4) if avg_team_wn8 else "0000"
+                avg_team_wn8_str = str(avg_team_wn8) if avg_team_wn8 else "0"
                 
                 avg_wn8_text = '<font face="Tahoma" size="14" color="{0}"><b>wn8 {1}</b></font>'.format(avg_wn8_color, avg_team_wn8_str)
  
