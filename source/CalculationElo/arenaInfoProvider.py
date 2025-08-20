@@ -75,12 +75,10 @@ class ArenaInfoProvider():
                 if g_configParams.enabled.value:
                     print_debug("[ArenaInfoProvider] Mod enabled, processing...")
 
-                    self.set_account_ids_in_battle(vehicles)
-                    print_debug("[ArenaInfoProvider] Account IDs in battle set: %s" % self.account_ids)
                     
                     if self.__guiType in (15, 16):
                         print_debug("[ArenaInfoProvider] Valid GUI type: %d" % self.__guiType)
-                        
+
                         self.__playerTeam = BigWorld.player().team
                         print_debug("[ArenaInfoProvider] Player team: %d" % self.__playerTeam)
 
@@ -105,12 +103,15 @@ class ArenaInfoProvider():
 
                         self.team_info['wins_percent'], self.team_info['battles_count'] = g_clanAPI.get_for_last_28_days(self.team_info['id_enemies'], self.__tank_tier, self.__guiType)
                         print_debug("[ArenaInfoProvider] Last 28 days - wins percent: %s, battles count: %s" % (self.team_info['wins_percent'], self.team_info['battles_count']))
-
-                        self.team_info['avg_team_wn8'] = g_avgWN8.get_avg_team_wn8(self.account_ids)
-                        g_avgWN8.save_team_wn8_history(self.team_info['avg_team_wn8'], self.team_info['enemies'], self.team_info['enemies_rating'])
-                        print_debug("[ArenaInfoProvider] Average team WN8: %s" % self.team_info['avg_team_wn8'])
+                        
+                        if g_configParams.showAvgTeamWn8.value or g_configParams.recordAvgTeamWn8.value:
+                            self.set_account_ids_in_battle(vehicles)
+                            print_debug("[ArenaInfoProvider] Account IDs in battle set: %s" % self.account_ids)
+                            self.team_info['avg_team_wn8'] = g_avgWN8.get_avg_team_wn8(self.account_ids)
+                            g_avgWN8.save_team_wn8_history(self.team_info['avg_team_wn8'], self.team_info['enemies'], self.team_info['enemies_rating'])
+                            print_debug("[ArenaInfoProvider] Average team WN8: %s" % self.team_info['avg_team_wn8'])
+                        
                         try:
-                            # g_multiTextPanel.create_text_fields(self.ON_HOTKEY_PRESSED)
                             g_multiTextPanel.set_panel_visibility(True)
                             print_debug("[ArenaInfoProvider] Updating text fields")
                             
@@ -168,30 +169,6 @@ class ArenaInfoProvider():
             g_multiTextPanel.start_key_held(self.ON_HOTKEY_PRESSED)
             
             g_config.sync_with_msa()
-
-            if g_configParams.enabled.value:
-                print_debug("[ArenaInfoProvider] Mod enabled, checking GUI type...")
-                
-                # if self.__guiType in (15, 16):
-                #     print_debug("[ArenaInfoProvider] Valid GUI type, preparing text fields...")
-                    
-                #     print_debug("[ArenaInfoProvider] Updating text fields with visibility: %s" % self.ON_HOTKEY_PRESSED)
-                #     g_multiTextPanel.update_text_fields(
-                #         self.ON_HOTKEY_PRESSED, 
-                #         self.team_info['allies'], 
-                #         self.team_info['enemies'], 
-                #         self.team_info['allies_rating'], 
-                #         self.team_info['enemies_rating'], 
-                #         self.team_info['elo_plus'], 
-                #         self.team_info['elo_minus'],
-                #         self.team_info['wins_percent'],
-                #         self.team_info['battles_count'],
-                #         self.team_info['avg_team_wn8']
-                #     )
-                # else:
-                #     print_debug("[ArenaInfoProvider] Invalid GUI type: %d" % self.__guiType)
-            else:
-                print_debug("[ArenaInfoProvider] Mod disabled")
                 
             self.__arena = arena
             
