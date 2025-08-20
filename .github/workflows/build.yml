@@ -1,0 +1,66 @@
+name: Build
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+env:
+  PackerUser: "me.under_pressure"
+  PackerName: "calculationelo"
+  PackerVersion: "0.0.6"
+  PackerDescription: "Shows various information about the opponent in the stronghold battles."
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 2.7
+        uses: LizardByte/setup-python-action@master
+        with:
+          python-version: '2.7'
+
+      - name: Compile sources
+        run: |
+          mkdir -Force res\scripts\client\gui\mods
+          python compile_all.py -f -d res\scripts\client\gui\mods source
+
+      - name: Move .pyc files
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path source -Filter "*.pyc" -Recurse | ForEach-Object {
+              $relativePath = $_.FullName.Substring((Resolve-Path "source").Path.Length)
+              $targetPath = Join-Path "res\scripts\client\gui\mods" $relativePath
+              $targetDir = Split-Path $targetPath -Parent
+
+              if (-not (Test-Path $targetDir)) {
+                  New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+              }
+
+              Move-Item $_.FullName $targetPath -Force
+          }
+
+      - name: Run packer
+        run: |
+          python packer.py `
+            -u "${{ env.PackerUser }}" `
+            -n "${{ env.PackerName }}" `
+            -v "${{ env.PackerVersion }}" `
+            -d "${{ env.PackerDescription }}" `
+            -f "res"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: packed-mod
+          path: build/*.wotmod
+
+      - name: Upload Release
+        uses: xresloader/upload-to-github-release@v1
+        with:
+          file: "build/*.wotmod"
+          overwrite: true
+          update_latest_release: true
