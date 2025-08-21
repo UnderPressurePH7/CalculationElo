@@ -1,7 +1,7 @@
 $PythonExe = "C:\Python27\python.exe"
 $PackerUser = "me.under_pressure"
 $PackerName = "calculationelo"
-$PackerVersion = "0.0.6"
+$PackerVersion = "1.0.0"
 $PackerDescription = "Shows various information about the opponent in the stronghold battles."
 
 
