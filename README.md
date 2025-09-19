@@ -10,5 +10,5 @@
 
 ### Instalation:
 1. Download mod from [Releases](https://github.com/UnderPressurePH7/CalculationElo/releases).
-2. Move `wotmod` file to `GameFolder/mods/1.29.x`
+2. Move `wotmod` file to `GameFolder/mods/2.0.x`
 3. Don't forget to install dependencies (See above).
