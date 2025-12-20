@@ -1,5 +1,5 @@
 # CalculationElo
-<img align="left" src="https://shields.io/badge/version-1.0.0-blue">
+<img align="left" src="https://shields.io/badge/version-1.1.0-blue">
 <br>
 <img src="https://github.com/user-attachments/assets/8d877b75-4b57-44c3-a840-659067a23776" />
 
