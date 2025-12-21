@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import threading
+from ..utils import print_debug, print_error
 
 import ResMgr
 from helpers import getClientLanguage
@@ -8,15 +9,6 @@ from helpers import getClientLanguage
 
 class TranslationError(Exception):
     pass
-
-
-def _print_error(msg):
-    print("[CalculationElo] [ERROR]: {}".format(msg))
-
-
-def _print_debug(msg):
-    print("[CalculationElo] [DEBUG]: {}".format(msg))
-
 
 class TranslationManager(object):
 
@@ -36,7 +28,7 @@ class TranslationManager(object):
                 content = content.decode('utf-8')
             return json.loads(content)
         except (ValueError, TypeError, UnicodeDecodeError) as e:
-            _print_error("[TranslationManager] Failed to parse JSON for language {}: {}".format(language, e))
+            _("[TranslationManager] Failed to parse JSON for language {}: {}".format(language, e))
             return None
 
     def _loadLanguageFile(self, language):
@@ -45,7 +37,7 @@ class TranslationManager(object):
             translationsRes = ResMgr.openSection(translationPath)
 
             if translationsRes is None:
-                _print_debug("[TranslationManager] Translation file not found for language: {}".format(language))
+                print_debug("[TranslationManager] Translation file not found for language: {}".format(language))
                 return None
 
             content = translationsRes.asBinary
@@ -56,39 +48,39 @@ class TranslationManager(object):
             return self._safeJsonLoad(content, language)
 
         except Exception as e:
-            _print_error("[TranslationManager] Error loading translation file for {}: {}".format(language, e))
+            print_error("[TranslationManager] Error loading translation file for {}: {}".format(language, e))
             return None
 
     def _validateTranslations(self, translations, language):
         if not isinstance(translations, dict):
-            _print_error("[TranslationManager] Invalid translation format for {}: expected dict, got {}".format(
+            print_error("[TranslationManager] Invalid translation format for {}: expected dict, got {}".format(
                 language, type(translations).__name__))
             return False
 
         emptyKeys = [key for key, value in translations.items() if not value or not str(value).strip()]
         if emptyKeys:
-            _print_debug("[TranslationManager] Empty translation values in {} for keys: {}".format(language, emptyKeys))
+            print_debug("[TranslationManager] Empty translation values in {} for keys: {}".format(language, emptyKeys))
 
         return True
 
     def loadTranslations(self, forceReload=False):
         if self._translationsLoaded and not forceReload:
-            _print_debug("[TranslationManager] Translations already loaded, skipping...")
+            print_debug("[TranslationManager] Translations already loaded, skipping...")
             return True
 
         try:
-            _print_debug("[TranslationManager] Loading default translations ({})...".format(self.fallbackLanguage))
+            print_debug("[TranslationManager] Loading default translations ({})...".format(self.fallbackLanguage))
             defaultTranslations = self._loadLanguageFile(self.fallbackLanguage)
 
             if defaultTranslations is None:
-                _print_error("[TranslationManager] Failed to load default translations. Using hardcoded defaults.")
+                print_error("[TranslationManager] Failed to load default translations. Using hardcoded defaults.")
                 self._defaultTranslationsMap = self._getHardcodedDefaults()
                 self._translationsMap = self._defaultTranslationsMap.copy()
                 self._translationsLoaded = True
                 return True
 
             if not self._validateTranslations(defaultTranslations, self.fallbackLanguage):
-                _print_error("[TranslationManager] Invalid default translation format")
+                print_error("[TranslationManager] Invalid default translation format")
                 return False
 
             self._defaultTranslationsMap = defaultTranslations
@@ -99,16 +91,16 @@ class TranslationManager(object):
                 clientLanguage = self.fallbackLanguage
 
             self._currentLanguage = clientLanguage
-            _print_debug("[TranslationManager] Detected client language: {}".format(clientLanguage))
+            print_debug("[TranslationManager] Detected client language: {}".format(clientLanguage))
 
             if clientLanguage != self.fallbackLanguage:
                 clientTranslations = self._loadLanguageFile(clientLanguage)
 
                 if clientTranslations is not None and self._validateTranslations(clientTranslations, clientLanguage):
-                    _print_debug("[TranslationManager] Loaded translations for language: {}".format(clientLanguage))
+                    print_debug("[TranslationManager] Loaded translations for language: {}".format(clientLanguage))
                     self._translationsMap = clientTranslations
                 else:
-                    _print_debug("[TranslationManager] Failed to load {} translations, using {} as fallback".format(
+                    print_debug("[TranslationManager] Failed to load {} translations, using {} as fallback".format(
                         clientLanguage, self.fallbackLanguage))
                     self._translationsMap = defaultTranslations.copy()
             else:
@@ -117,11 +109,11 @@ class TranslationManager(object):
             self._clearCache()
             self._translationsLoaded = True
 
-            _print_debug("[TranslationManager] Translation system initialized successfully")
+            print_debug("[TranslationManager] Translation system initialized successfully")
             return True
 
         except Exception as e:
-            _print_error("[TranslationManager] Critical error during translation loading: {}".format(e))
+            print_error("[TranslationManager] Critical error during translation loading: {}".format(e))
             self._defaultTranslationsMap = self._getHardcodedDefaults()
             self._translationsMap = self._defaultTranslationsMap.copy()
             self._translationsLoaded = True
@@ -186,9 +178,9 @@ class TranslationManager(object):
         try:
             success = self.loadTranslations()
             if not success:
-                _print_error("[TranslationManager] Failed to initialize translation system")
+                print_error("[TranslationManager] Failed to initialize translation system")
         except Exception as e:
-            _print_error("[TranslationManager] Critical error initializing translations: {}".format(e))
+            print_error("[TranslationManager] Critical error initializing translations: {}".format(e))
 
 
 g_translationManager = TranslationManager()
@@ -218,7 +210,7 @@ class TranslationElement(TranslationBase):
 
     def _generateTranslation(self):
         if not self._manager._translationsLoaded:
-            _print_debug("[TranslationElement] Translations not loaded, attempting to load...")
+            print_debug("[TranslationElement] Translations not loaded, attempting to load...")
             self._manager.loadTranslations()
 
         cached = self._manager._getCachedTranslation(self._tokenName)
@@ -231,7 +223,7 @@ class TranslationElement(TranslationBase):
         elif self._tokenName in self._manager._defaultTranslationsMap:
             translation = self._manager._defaultTranslationsMap[self._tokenName]
         else:
-            _print_debug("[TranslationElement] Translation not found for token: {}".format(self._tokenName))
+            print_debug("[TranslationElement] Translation not found for token: {}".format(self._tokenName))
             translation = self._tokenName.replace('.', ' ').replace('_', ' ').title()
 
         self._manager._cacheTranslation(self._tokenName, translation)
