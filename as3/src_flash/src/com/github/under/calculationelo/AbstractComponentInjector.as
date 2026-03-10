@@ -68,10 +68,19 @@ package com.github.under.calculationelo
 
             if(this.autoDestroy)
             {
-                App.utils.scheduler.scheduleOnNextFrame(function():*
+                var destroyFn:Function = this.destroy;
+                this.destroy = null;
+                this.componentUI = null;
+                this.componentName = null;
+
+                if (destroyFn != null)
                 {
-                    destroy();
-                });
+                    App.utils.scheduler.scheduleOnNextFrame(function():*
+                    {
+                        destroyFn();
+                        destroyFn = null;
+                    });
+                }
             }
         }
     }
