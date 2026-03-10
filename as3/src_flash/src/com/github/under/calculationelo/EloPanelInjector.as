@@ -11,7 +11,7 @@ package com.github.under.calculationelo
         {
             this.autoDestroy = false; 
             this.componentName = "EloPanelMain";
-            this.componentUI = EloPanelComponent; // Ваш основний клас інтерфейсу
+            this.componentUI = EloPanelComponent;
 
             super.onPopulate();
         }
