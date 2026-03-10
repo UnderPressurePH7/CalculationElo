@@ -2,9 +2,6 @@ package com.github.under.calculationelo
 {
     import flash.display.Sprite;
     import flash.display.Shape;
-    import flash.display.Bitmap;
-    import flash.display.BitmapData;
-    import flash.display.Loader;
     import flash.display.GradientType;
     import flash.display.SpreadMethod;
     import flash.display.Graphics;
@@ -14,10 +11,7 @@ package com.github.under.calculationelo
     import flash.filters.DropShadowFilter;
     import flash.geom.Matrix;
     import flash.geom.Point;
-    import flash.events.Event;
-    import flash.events.IOErrorEvent;
     import flash.events.MouseEvent;
-    import flash.net.URLRequest;
     import net.wg.data.constants.Cursors;
 
     public class EloPanelComponent extends EloBattleDisplayable
@@ -25,19 +19,12 @@ package com.github.under.calculationelo
         private static const BASE_WIDTH:int = 140;
         private static const BASE_HEIGHT:int = 110;
         private static const BOUNDARY_GAP:int = 5;
-        private static const BACKGROUND_IMAGE:String = 'img://gui/maps/icons/tanksetup/popular_loadouts/legendary_bg.png';
 
         public var updatePosition:Function = null;
 
         private var _panel:Sprite;
         private var _dragArea:Sprite;
         private var _background:Shape;
-        private var _bgImageHolder:Sprite;
-        private var _bgImageLoaded:Boolean = false;
-        private var _bgBitmap:Bitmap = null;
-        private var _bgBitmapData:BitmapData = null;
-        private var _bgLoader:Loader = null;
-        private var _bgMaskShape:Shape = null;
 
         private var _headerField:TextField;
         private var _alliesNameField:TextField;
@@ -86,10 +73,8 @@ package com.github.under.calculationelo
             _createShadowFilter();
             _createPanel();
             _createDragArea();
-            _createBackgroundImageHolder();
             _createBackground();
             _createTextFields();
-            _loadBackgroundImage();
             _initialized = true;
             visible = false;
 
@@ -107,17 +92,6 @@ package com.github.under.calculationelo
             _dragArea.removeEventListener(MouseEvent.MOUSE_OVER, _onMouseOver);
             _dragArea.removeEventListener(MouseEvent.MOUSE_OUT, _onMouseOut);
             _removeStageDragListeners();
-
-            _cleanupLoader();
-            _disposeBgBitmapData();
-
-            _clearBgImageHolder();
-
-            if (_bgImageHolder)
-            {
-                _bgImageHolder.mask = null;
-            }
-            _bgMaskShape = null;
 
             _disposeTextField(_headerField);
             _disposeTextField(_alliesNameField);
@@ -147,15 +121,6 @@ package com.github.under.calculationelo
                 _background = null;
             }
 
-            if (_bgImageHolder)
-            {
-                if (_panel && _panel.contains(_bgImageHolder))
-                {
-                    _panel.removeChild(_bgImageHolder);
-                }
-                _bgImageHolder = null;
-            }
-
             if (_panel)
             {
                 _panel.mouseEnabled = false;
@@ -181,7 +146,6 @@ package com.github.under.calculationelo
 
             _textShadow = null;
             updatePosition = null;
-
             _offset = null;
             _initialized = false;
 
@@ -204,62 +168,6 @@ package com.github.under.calculationelo
                 _panel.removeChild(tf);
             }
         }
-
-        private function _disposeBgBitmapData():void
-        {
-            if (_bgBitmapData)
-            {
-                try
-                {
-                    _bgBitmapData.dispose();
-                }
-                catch (err:Error) {}
-                _bgBitmapData = null;
-            }
-            _bgBitmap = null;
-        }
-
-        private function _clearBgImageHolder():void
-        {
-            if (!_bgImageHolder) return;
-
-            while (_bgImageHolder.numChildren > 0)
-            {
-                var child:DisplayObject = _bgImageHolder.removeChildAt(0);
-                if (child is Bitmap)
-                {
-                    var bmp:Bitmap = child as Bitmap;
-                    bmp.bitmapData = null;
-                }
-                else if (child is Shape)
-                {
-                    (child as Shape).graphics.clear();
-                }
-            }
-            _bgImageHolder.mask = null;
-        }
-
-
-        private function _cleanupLoader():void
-        {
-            if (_bgLoader)
-            {
-                try
-                {
-                    _bgLoader.contentLoaderInfo.removeEventListener(Event.COMPLETE, _onBgImageLoaded);
-                    _bgLoader.contentLoaderInfo.removeEventListener(IOErrorEvent.IO_ERROR, _onBgImageError);
-                }
-                catch (err:Error) {}
-
-                try
-                {
-                    _bgLoader.unloadAndStop();
-                }
-                catch (err:Error) {}
-                _bgLoader = null;
-            }
-        }
-
 
         private function _onMouseDown(e:MouseEvent):void
         {
@@ -395,78 +303,6 @@ package com.github.under.calculationelo
             _dragArea.graphics.endFill();
         }
 
-        private function _createBackgroundImageHolder():void
-        {
-            _bgImageHolder = new Sprite();
-            _panel.addChild(_bgImageHolder);
-        }
-
-        private function _loadBackgroundImage():void
-        {
-            try
-            {
-                _bgLoader = new Loader();
-                _bgLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, _onBgImageLoaded);
-                _bgLoader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, _onBgImageError);
-                _bgLoader.load(new URLRequest(BACKGROUND_IMAGE));
-            }
-            catch (err:Error) {}
-        }
-
-        private function _onBgImageLoaded(e:Event):void
-        {
-            if (_disposed) return;
-
-            try
-            {
-                var loader:Loader = e.target.loader as Loader;
-                if (loader && loader.content)
-                {
-                    _bgBitmap = loader.content as Bitmap;
-                    if (_bgBitmap && _bgBitmap.bitmapData)
-                    {
-                        _bgBitmapData = _bgBitmap.bitmapData;
-                        _bgImageLoaded = true;
-                        _updateBgImage();
-                        _drawBackground();
-                    }
-                }
-            }
-            catch (err:Error) {}
-            finally
-            {
-                _cleanupLoader();
-            }
-        }
-
-        private function _onBgImageError(e:IOErrorEvent):void
-        {
-            _bgImageLoaded = false;
-            _cleanupLoader();
-        }
-
-        private function _updateBgImage():void
-        {
-            if (!_bgImageHolder || _disposed) return;
-
-            _clearBgImageHolder();
-
-            if (!_bgImageLoaded || !_bgBitmapData) return;
-
-            var bmp:Bitmap = new Bitmap(_bgBitmapData, "auto", true);
-            bmp.width = _panelWidth;
-            bmp.height = _panelHeight;
-            bmp.alpha = 0.75;
-            _bgImageHolder.addChild(bmp);
-
-            _bgMaskShape = new Shape();
-            _bgMaskShape.graphics.beginFill(0xFFFFFF);
-            _bgMaskShape.graphics.drawRoundRect(0, 0, _panelWidth, _panelHeight, 6, 6);
-            _bgMaskShape.graphics.endFill();
-            _bgImageHolder.addChild(_bgMaskShape);
-            _bgImageHolder.mask = _bgMaskShape;
-        }
-
         private function _createBackground():void
         {
             _background = new Shape();
@@ -484,10 +320,7 @@ package com.github.under.calculationelo
             var matrix:Matrix = new Matrix();
             matrix.createGradientBox(_panelWidth, _panelHeight, Math.PI / 2, 0, 0);
 
-            var a1:Number = _bgImageLoaded ? 0.45 : 0.85;
-            var a2:Number = _bgImageLoaded ? 0.55 : 0.9;
-
-            g.beginGradientFill(GradientType.LINEAR, [0x1a1a2e, 0x0d0d1a], [a1, a2], [0, 255], matrix, SpreadMethod.PAD);
+            g.beginGradientFill(GradientType.LINEAR, [0x1a1a2e, 0x0d0d1a], [0.85, 0.9], [0, 255], matrix, SpreadMethod.PAD);
             g.drawRoundRect(0, 0, _panelWidth, _panelHeight, 6, 6);
             g.endFill();
 
@@ -602,7 +435,6 @@ package com.github.under.calculationelo
             if (_initialized) _layoutFields();
         }
 
-
         private function _layoutFields():void
         {
             if (_disposed) return;
@@ -667,7 +499,6 @@ package com.github.under.calculationelo
 
             _panelHeight = currentY + _s(5);
             _updateDragArea();
-            _updateBgImage();
             _drawBackground();
         }
 
