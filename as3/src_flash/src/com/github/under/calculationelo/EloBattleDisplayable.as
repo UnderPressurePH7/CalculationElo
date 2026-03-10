@@ -28,26 +28,38 @@ package com.github.under.calculationelo
 
         public function finiBattle():void
         {
-            if (this.battlePage.isFlashComponentRegisteredS(this.componentName))
+            if (this.battlePage)
             {
-                this.battlePage.unregisterFlashComponentS(this.componentName);
-            }
-            if (this.battlePage.contains(this))
-            {
-                this.battlePage.removeChild(this);
+                if (this.battlePage.isFlashComponentRegisteredS(this.componentName))
+                {
+                    this.battlePage.unregisterFlashComponentS(this.componentName);
+                }
+                if (this.battlePage.contains(this))
+                {
+                    this.battlePage.removeChild(this);
+                }
             }
         }
 
         override protected function onPopulate():void
         {
             super.onPopulate();
-            this.battlePage.addEventListener(Event.RESIZE, _handleResize);
+            if (this.battlePage)
+            {
+                this.battlePage.addEventListener(Event.RESIZE, _handleResize);
+            }
         }
 
         override protected function onDispose():void
         {
-            this.battlePage.removeEventListener(Event.RESIZE, _handleResize);
+            if (this.battlePage)
+            {
+                this.battlePage.removeEventListener(Event.RESIZE, _handleResize);
+            }
             this.finiBattle();
+            this.battlePage = null;
+            this.componentName = null;
+
             super.onDispose();
         }
 
