@@ -3,10 +3,12 @@ package com.github.under.calculationelo
     import flash.display.Sprite;
     import flash.display.Shape;
     import flash.display.Bitmap;
+    import flash.display.BitmapData;
     import flash.display.Loader;
     import flash.display.GradientType;
     import flash.display.SpreadMethod;
     import flash.display.Graphics;
+    import flash.display.DisplayObject;
     import flash.text.TextField;
     import flash.text.TextFieldAutoSize;
     import flash.filters.DropShadowFilter;
@@ -33,7 +35,9 @@ package com.github.under.calculationelo
         private var _bgImageHolder:Sprite;
         private var _bgImageLoaded:Boolean = false;
         private var _bgBitmap:Bitmap = null;
+        private var _bgBitmapData:BitmapData = null;
         private var _bgLoader:Loader = null;
+        private var _bgMaskShape:Shape = null;
 
         private var _headerField:TextField;
         private var _alliesNameField:TextField;
@@ -54,6 +58,7 @@ package com.github.under.calculationelo
 
         private var _isDragging:Boolean = false;
         private var _initialized:Boolean = false;
+        private var _disposed:Boolean = false;
 
         private var _showTitle:Boolean = false;
         private var _showTeamNames:Boolean = true;
@@ -95,20 +100,145 @@ package com.github.under.calculationelo
 
         override protected function onDispose():void
         {
+            if (_disposed) return;
+            _disposed = true;
+
             _dragArea.removeEventListener(MouseEvent.MOUSE_DOWN, _onMouseDown);
             _dragArea.removeEventListener(MouseEvent.MOUSE_OVER, _onMouseOver);
             _dragArea.removeEventListener(MouseEvent.MOUSE_OUT, _onMouseOut);
             _removeStageDragListeners();
+
             _cleanupLoader();
+            _disposeBgBitmapData();
+
+            _clearBgImageHolder();
+
+            if (_bgImageHolder)
+            {
+                _bgImageHolder.mask = null;
+            }
+            _bgMaskShape = null;
+
+            _disposeTextField(_headerField);
+            _disposeTextField(_alliesNameField);
+            _disposeTextField(_enemiesNameField);
+            _disposeTextField(_alliesRatingField);
+            _disposeTextField(_enemiesRatingField);
+            _disposeTextField(_eloGainField);
+            _disposeTextField(_eloLossField);
+            _disposeTextField(_enemyStatsField);
+
+            _headerField = null;
+            _alliesNameField = null;
+            _enemiesNameField = null;
+            _alliesRatingField = null;
+            _enemiesRatingField = null;
+            _eloGainField = null;
+            _eloLossField = null;
+            _enemyStatsField = null;
+
+            if (_background)
+            {
+                _background.graphics.clear();
+                if (_panel && _panel.contains(_background))
+                {
+                    _panel.removeChild(_background);
+                }
+                _background = null;
+            }
+
+            if (_bgImageHolder)
+            {
+                if (_panel && _panel.contains(_bgImageHolder))
+                {
+                    _panel.removeChild(_bgImageHolder);
+                }
+                _bgImageHolder = null;
+            }
+
+            if (_panel)
+            {
+                _panel.mouseEnabled = false;
+                _panel.mouseChildren = false;
+                if (contains(_panel))
+                {
+                    removeChild(_panel);
+                }
+                _panel = null;
+            }
+
+            if (_dragArea)
+            {
+                _dragArea.graphics.clear();
+                _dragArea.buttonMode = false;
+                _dragArea.useHandCursor = false;
+                if (contains(_dragArea))
+                {
+                    removeChild(_dragArea);
+                }
+                _dragArea = null;
+            }
+
+            _textShadow = null;
+            updatePosition = null;
+
+            _offset = null;
+            _initialized = false;
+
             super.onDispose();
         }
 
         override protected function onResized():void
         {
+            if (_disposed) return;
             _syncPositions();
         }
 
-        // ---- Loader cleanup ----
+        private function _disposeTextField(tf:TextField):void
+        {
+            if (tf == null) return;
+            tf.filters = [];
+            tf.htmlText = "";
+            if (_panel && _panel.contains(tf))
+            {
+                _panel.removeChild(tf);
+            }
+        }
+
+        private function _disposeBgBitmapData():void
+        {
+            if (_bgBitmapData)
+            {
+                try
+                {
+                    _bgBitmapData.dispose();
+                }
+                catch (err:Error) {}
+                _bgBitmapData = null;
+            }
+            _bgBitmap = null;
+        }
+
+        private function _clearBgImageHolder():void
+        {
+            if (!_bgImageHolder) return;
+
+            while (_bgImageHolder.numChildren > 0)
+            {
+                var child:DisplayObject = _bgImageHolder.removeChildAt(0);
+                if (child is Bitmap)
+                {
+                    var bmp:Bitmap = child as Bitmap;
+                    bmp.bitmapData = null;
+                }
+                else if (child is Shape)
+                {
+                    (child as Shape).graphics.clear();
+                }
+            }
+            _bgImageHolder.mask = null;
+        }
+
 
         private function _cleanupLoader():void
         {
@@ -120,14 +250,20 @@ package com.github.under.calculationelo
                     _bgLoader.contentLoaderInfo.removeEventListener(IOErrorEvent.IO_ERROR, _onBgImageError);
                 }
                 catch (err:Error) {}
+
+                try
+                {
+                    _bgLoader.unloadAndStop();
+                }
+                catch (err:Error) {}
                 _bgLoader = null;
             }
         }
 
-        // ---- Drag ----
 
         private function _onMouseDown(e:MouseEvent):void
         {
+            if (_disposed) return;
             _isDragging = true;
             App.cursor.forceSetCursor(Cursors.MOVE);
             _dragArea.startDrag();
@@ -140,7 +276,7 @@ package com.github.under.calculationelo
 
         private function _onMouseMove(e:MouseEvent):void
         {
-            if (_isDragging)
+            if (_isDragging && _panel && _dragArea)
             {
                 var clamped:Point = _clampToScreen(_dragArea.x, _dragArea.y);
                 _panel.x = clamped.x;
@@ -153,9 +289,11 @@ package com.github.under.calculationelo
             if (_isDragging)
             {
                 _isDragging = false;
-                _dragArea.stopDrag();
+                if (_dragArea) _dragArea.stopDrag();
                 _removeStageDragListeners();
                 App.cursor.forceSetCursor(Cursors.ARROW);
+
+                if (!_dragArea || _disposed) return;
 
                 var anchor:Point = _getAnchor();
                 var clamped:Point = _clampToScreen(_dragArea.x, _dragArea.y);
@@ -183,11 +321,13 @@ package com.github.under.calculationelo
 
         private function _onMouseOver(e:MouseEvent):void
         {
+            if (_disposed) return;
             App.cursor.forceSetCursor(Cursors.DRAG_OPEN);
         }
 
         private function _onMouseOut(e:MouseEvent):void
         {
+            if (_disposed) return;
             if (!_isDragging)
             {
                 App.cursor.forceSetCursor(Cursors.ARROW);
@@ -211,7 +351,7 @@ package com.github.under.calculationelo
 
         private function _syncPositions():void
         {
-            if (_isDragging) return;
+            if (_isDragging || _disposed || !_panel || !_dragArea) return;
 
             var anchor:Point = _getAnchor();
             var targetX:Number = anchor.x + _offset[0] / App.appScale;
@@ -221,8 +361,6 @@ package com.github.under.calculationelo
             _panel.x = _dragArea.x = clamped.x;
             _panel.y = _dragArea.y = clamped.y;
         }
-
-        // ---- Create UI ----
 
         private function _createShadowFilter():void
         {
@@ -250,6 +388,7 @@ package com.github.under.calculationelo
 
         private function _updateDragArea():void
         {
+            if (!_dragArea) return;
             _dragArea.graphics.clear();
             _dragArea.graphics.beginFill(0x000000, 0.0);
             _dragArea.graphics.drawRect(0, 0, _panelWidth, _panelHeight);
@@ -276,14 +415,17 @@ package com.github.under.calculationelo
 
         private function _onBgImageLoaded(e:Event):void
         {
+            if (_disposed) return;
+
             try
             {
                 var loader:Loader = e.target.loader as Loader;
                 if (loader && loader.content)
                 {
                     _bgBitmap = loader.content as Bitmap;
-                    if (_bgBitmap)
+                    if (_bgBitmap && _bgBitmap.bitmapData)
                     {
+                        _bgBitmapData = _bgBitmap.bitmapData;
                         _bgImageLoaded = true;
                         _updateBgImage();
                         _drawBackground();
@@ -305,25 +447,24 @@ package com.github.under.calculationelo
 
         private function _updateBgImage():void
         {
-            while (_bgImageHolder.numChildren > 0)
-            {
-                _bgImageHolder.removeChildAt(0);
-            }
+            if (!_bgImageHolder || _disposed) return;
 
-            if (!_bgImageLoaded || !_bgBitmap || !_bgBitmap.bitmapData) return;
+            _clearBgImageHolder();
 
-            var bmp:Bitmap = new Bitmap(_bgBitmap.bitmapData, "auto", true);
+            if (!_bgImageLoaded || !_bgBitmapData) return;
+
+            var bmp:Bitmap = new Bitmap(_bgBitmapData, "auto", true);
             bmp.width = _panelWidth;
             bmp.height = _panelHeight;
             bmp.alpha = 0.75;
             _bgImageHolder.addChild(bmp);
 
-            var maskShape:Shape = new Shape();
-            maskShape.graphics.beginFill(0xFFFFFF);
-            maskShape.graphics.drawRoundRect(0, 0, _panelWidth, _panelHeight, 6, 6);
-            maskShape.graphics.endFill();
-            _bgImageHolder.addChild(maskShape);
-            _bgImageHolder.mask = maskShape;
+            _bgMaskShape = new Shape();
+            _bgMaskShape.graphics.beginFill(0xFFFFFF);
+            _bgMaskShape.graphics.drawRoundRect(0, 0, _panelWidth, _panelHeight, 6, 6);
+            _bgMaskShape.graphics.endFill();
+            _bgImageHolder.addChild(_bgMaskShape);
+            _bgImageHolder.mask = _bgMaskShape;
         }
 
         private function _createBackground():void
@@ -335,6 +476,8 @@ package com.github.under.calculationelo
 
         private function _drawBackground():void
         {
+            if (!_background || _disposed) return;
+
             var g:Graphics = _background.graphics;
             g.clear();
 
@@ -385,8 +528,6 @@ package com.github.under.calculationelo
             return tf;
         }
 
-        // ---- Public API (called from Python) ----
-
         public function as_updateState(
             alliesName:String, enemiesName:String,
             alliesRating:int, enemiesRating:int,
@@ -394,19 +535,20 @@ package com.github.under.calculationelo
             winsPercent:int, battlesCount:int
         ):void
         {
-            if (!_initialized) return;
+            if (!_initialized || _disposed) return;
             _updateDisplay(alliesName, enemiesName, alliesRating, enemiesRating,
                            eloPlus, eloMinus, winsPercent, battlesCount);
         }
 
         public function as_setVisible(isVisible:Boolean):void
         {
+            if (_disposed) return;
             this.visible = isVisible;
         }
 
         public function as_setPosition(offset:Array):void
         {
-            if (!_initialized) return;
+            if (!_initialized || _disposed) return;
             if (offset && offset.length >= 2)
             {
                 _offset = [int(offset[0]), int(offset[1])];
@@ -416,14 +558,17 @@ package com.github.under.calculationelo
 
         public function as_setScale(factor:Number):void
         {
-            if (!_initialized) return;
+            if (!_initialized || _disposed) return;
             _scaleFactor = factor;
             _panelWidth = int(BASE_WIDTH * _scaleFactor);
             _panelHeight = int(BASE_HEIGHT * _scaleFactor);
 
-            _textShadow.distance = _s(1);
-            _textShadow.blurX = _s(2);
-            _textShadow.blurY = _s(2);
+            if (_textShadow)
+            {
+                _textShadow.distance = _s(1);
+                _textShadow.blurX = _s(2);
+                _textShadow.blurY = _s(2);
+            }
 
             _updateDragArea();
             _layoutFields();
@@ -439,6 +584,8 @@ package com.github.under.calculationelo
             eloGainColor:String, eloLossColor:String
         ):void
         {
+            if (_disposed) return;
+
             _showTitle = showTitle;
             _showTeamNames = showTeamNames;
             _showEloChanges = showEloChanges;
@@ -455,10 +602,11 @@ package com.github.under.calculationelo
             if (_initialized) _layoutFields();
         }
 
-        // ---- Layout ----
 
         private function _layoutFields():void
         {
+            if (_disposed) return;
+
             var currentY:int = _s(5);
             var centerX:int = _panelWidth / 2;
 
@@ -530,6 +678,8 @@ package com.github.under.calculationelo
             winsPercent:int, battlesCount:int
         ):void
         {
+            if (_disposed) return;
+
             var ratingSize:int = _s(20);
             var nameSize:int = _s(16);
             var smallSize:int = _s(14);
