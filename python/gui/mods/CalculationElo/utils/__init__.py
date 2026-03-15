@@ -62,21 +62,7 @@ __all__ = [
 ]
 
 logger = logging.getLogger('CalculationElo')
-
-if not logger.handlers:
-    _is_debug = os.path.isfile('.debug_mods')
-
-    if _is_debug:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
-
-    _handler = logging.StreamHandler()
-    _handler.setFormatter(logging.Formatter('[%(name)s] %(levelname)s: %(message)s'))
-    _handler.setLevel(logging.DEBUG if _is_debug else logging.INFO)
-
-    logger.addHandler(_handler)
-    logger.propagate = False
+logger.setLevel(logging.DEBUG if os.path.isfile('.debug_mods') else logging.ERROR)
 
 
 def cancelCallbackSafe(cbid):
@@ -146,7 +132,7 @@ class ApiFallbackRequester(object):
         if headers is None:
             headers = {
                 'Content-Type': 'application/json',
-                'User-Agent': 'WoT-CalculationElo/1.3'
+                'User-Agent': 'WoT-CalculationElo'
             }
 
         self._request_id += 1

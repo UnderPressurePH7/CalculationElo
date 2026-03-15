@@ -59,7 +59,6 @@ package com.github.under.calculationelo
             this.finiBattle();
             this.battlePage = null;
             this.componentName = null;
-
             super.onDispose();
         }
 

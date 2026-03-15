@@ -21,15 +21,13 @@ SWF_PATH = 'EloPanelMain.swf'
 
 BASE_SCREEN_WIDTH = 1920
 BASE_SCREEN_HEIGHT = 1080
-BASE_PANEL_WIDTH = 140
-BASE_PANEL_HEIGHT = 110
 
 
 def _registerFlashComponents():
     try:
         g_entitiesFactories.addSettings(
             ViewSettings(
-                INJECTOR_LINKAGE, View, SWF_PATH,
+                INJECTOR_LINKAGE, EloPanelInjectorView, SWF_PATH,
                 WindowLayer.WINDOW, None, ScopeTemplates.GLOBAL_SCOPE
             )
         )
@@ -50,6 +48,28 @@ def _unregisterFlashComponents():
         g_entitiesFactories.removeSettings(COMPONENT_LINKAGE)
     except Exception:
         pass
+
+
+class EloPanelInjectorView(View):
+
+    _g_eloPanel = None
+
+    def _populate(self):
+        super(EloPanelInjectorView, self)._populate()
+        logger.debug('[EloPanelInjectorView] _populate called')
+        if EloPanelInjectorView._g_eloPanel:
+            EloPanelInjectorView._g_eloPanel._onInjectorReady(self)
+
+    def _dispose(self):
+        logger.debug('[EloPanelInjectorView] _dispose called')
+        if EloPanelInjectorView._g_eloPanel:
+            EloPanelInjectorView._g_eloPanel._onInjectorDisposed()
+        super(EloPanelInjectorView, self)._dispose()
+
+    def py_onDragEnd(self, offset):
+        logger.debug('[EloPanelInjectorView] py_onDragEnd offset=%s', offset)
+        if EloPanelInjectorView._g_eloPanel:
+            EloPanelInjectorView._g_eloPanel._onDragEnd(offset)
 
 
 class EloPanelView(BaseDAAPIComponent):
@@ -99,13 +119,10 @@ class EloPanelView(BaseDAAPIComponent):
                                              headerText, headerColor, alliesNamesColor, enemiesNamesColor,
                                              alliesRatingColor, enemiesRatingColor, eloGainColor, eloLossColor)
 
-    def updatePosition(self, offset):
-        if EloPanelView._g_eloPanel:
-            EloPanelView._g_eloPanel._onDragEnd(offset)
-
 
 class EloPanel(object):
     def __init__(self):
+        self._injectorView = None
         self._view = None
         self._flashReady = False
         self._isInitialized = False
@@ -151,6 +168,7 @@ class EloPanel(object):
         displayMode = g_configParams.displayMode.value
         self._isHotkeyPressed = (displayMode == DisplayMode.ALWAYS)
 
+        EloPanelInjectorView._g_eloPanel = self
         EloPanelView._g_eloPanel = self
 
         if displayMode == DisplayMode.ON_HOTKEY_PRESSED:
@@ -185,7 +203,9 @@ class EloPanel(object):
 
         self._unregisterKeyHandlers()
         self._savePositionIfChanged()
+        EloPanelInjectorView._g_eloPanel = None
         EloPanelView._g_eloPanel = None
+        self._injectorView = None
         self._view = None
         self._flashReady = False
         self._resetState()
@@ -216,7 +236,9 @@ class EloPanel(object):
 
         self._unregisterKeyHandlers()
         self._savePositionIfChanged()
+        EloPanelInjectorView._g_eloPanel = None
         EloPanelView._g_eloPanel = None
+        self._injectorView = None
         self._view = None
         self._flashReady = False
 
@@ -237,6 +259,14 @@ class EloPanel(object):
                 logger.error('[EloPanel] Battle app not available')
         except Exception as e:
             logger.error('[EloPanel] Failed to inject flash: %s', e)
+
+    def _onInjectorReady(self, injectorView):
+        self._injectorView = injectorView
+        logger.debug('[EloPanel] Injector view ready')
+
+    def _onInjectorDisposed(self):
+        self._injectorView = None
+        logger.debug('[EloPanel] Injector view disposed')
 
     def _onFlashReady(self, view):
         self._view = view
@@ -294,13 +324,13 @@ class EloPanel(object):
             g_configParams.showEloChanges.value,
             g_configParams.showWinrateAndBattles.value,
             headerText,
-            g_configParams.headerColor.getHexColor(),
-            g_configParams.alliesNamesColor.getHexColor(),
-            g_configParams.enemiesNamesColor.getHexColor(),
-            g_configParams.alliesRatingColor.getHexColor(),
-            g_configParams.enemiesRatingColor.getHexColor(),
-            g_configParams.eloGainColor.getHexColor(),
-            g_configParams.eloLossColor.getHexColor()
+            g_configParams.headerColor.getPackedColor(),
+            g_configParams.alliesNamesColor.getPackedColor(),
+            g_configParams.enemiesNamesColor.getPackedColor(),
+            g_configParams.alliesRatingColor.getPackedColor(),
+            g_configParams.enemiesRatingColor.getPackedColor(),
+            g_configParams.eloGainColor.getPackedColor(),
+            g_configParams.eloLossColor.getPackedColor()
         )
 
     def _onDragEnd(self, offset):

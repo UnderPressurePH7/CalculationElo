@@ -165,8 +165,8 @@ class CheckboxParameter(BaseParameter):
             "value": currentValue,
             "tooltip": createTooltip(
                 header="{} ({}: {})".format(
-                    header, 
-                    Translator.DEFAULT_VALUE, 
+                    header,
+                    Translator.DEFAULT_VALUE,
                     Translator.CHECKED if self.defaultValue else Translator.UNCHECKED
                 ),
                 body=body,
@@ -204,7 +204,7 @@ class NumericParameter(BaseParameter):
 
 class SliderParameter(NumericParameter):
 
-    def __init__(self, path, castFunction, minValue, step, maxValue, defaultValue, 
+    def __init__(self, path, castFunction, minValue, step, maxValue, defaultValue,
                  disabledValue=None, formatStr='{{value}}'):
         super(SliderParameter, self).__init__(
             path, castFunction, minValue, step, maxValue, defaultValue, disabledValue
@@ -254,6 +254,12 @@ class ColorParameter(BaseParameter):
 
     def getHexColor(self):
         return '#' + self._colorToHex(self.value)
+
+    def getPackedColor(self):
+        c = self.value
+        if isinstance(c, (list, tuple)) and len(c) == 3:
+            return (int(c[0]) << 16) | (int(c[1]) << 8) | int(c[2])
+        return 0xFFFFFF
 
     def renderParam(self, header, body=None, note=None, attention=None):
         currentValue = self.toMsaValue(self.value)
@@ -347,8 +353,8 @@ class DropdownParameter(BaseParameter):
             ],
             "tooltip": createTooltip(
                 header="{} ({}: {})".format(
-                    header, 
-                    Translator.DEFAULT_VALUE, 
+                    header,
+                    Translator.DEFAULT_VALUE,
                     self.getOptionByValue(self.defaultValue).displayName
                 ),
                 body=body,
@@ -373,8 +379,8 @@ class RadioButtonGroupParameter(DropdownParameter):
             ],
             "tooltip": createTooltip(
                 header="{} ({}: {})".format(
-                    header, 
-                    Translator.DEFAULT_VALUE, 
+                    header,
+                    Translator.DEFAULT_VALUE,
                     self.getOptionByValue(self.defaultValue).displayName
                 ),
                 body=body,
