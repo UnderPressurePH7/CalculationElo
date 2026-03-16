@@ -42,6 +42,7 @@ class BattleProvider(object):
         self._isBattleActive = False
         self._isStrongholdBattle = False
         self._battleSessionId = 0
+        self._fallbackSubscribed = False
 
         BattleProvider._instance = self
         self._installOverrides()
@@ -68,9 +69,6 @@ class BattleProvider(object):
                     inst._onAvatarBecomeNonPlayer()
                 baseMethod(baseObject, *a, **kw)
 
-            BattleProvider._hooked = True
-            logger.debug('[BattleProvider] PlayerAvatar overrides installed')
-
             @override(BattleReplay.BattleReplay, 'onReplayFinished')
             def hooked_onReplayFinished(baseMethod, baseObject, *a, **kw):
                 inst = BattleProvider._instance
@@ -78,6 +76,8 @@ class BattleProvider(object):
                     inst._onAvatarBecomeNonPlayer()
                 return baseMethod(baseObject, *a, **kw)
 
+            BattleProvider._hooked = True
+            logger.debug('[BattleProvider] PlayerAvatar/BattleReplay overrides installed')
             logger.debug('[BattleProvider] BattleReplay override installed')
 
         except Exception as e:
@@ -91,6 +91,7 @@ class BattleProvider(object):
             from PlayerEvents import g_playerEvents
             g_playerEvents.onAvatarReady += self._onAvatarReady
             g_playerEvents.onAvatarBecomeNonPlayer += self._onAvatarBecomeNonPlayer
+            self._fallbackSubscribed = True
             logger.debug('[BattleProvider] Fallback: using g_playerEvents')
         except Exception as e:
             logger.error('[BattleProvider] Fallback subscription also failed: %s', e)
@@ -101,11 +102,12 @@ class BattleProvider(object):
         if BattleProvider._instance is self:
             BattleProvider._instance = None
 
-        if not BattleProvider._hooked:
+        if self._fallbackSubscribed:
             try:
                 from PlayerEvents import g_playerEvents
                 g_playerEvents.onAvatarReady -= self._onAvatarReady
                 g_playerEvents.onAvatarBecomeNonPlayer -= self._onAvatarBecomeNonPlayer
+                self._fallbackSubscribed = False
             except Exception as e:
                 logger.error('[BattleProvider] Error in fini: %s', e)
 
