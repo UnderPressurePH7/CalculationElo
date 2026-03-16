@@ -98,6 +98,7 @@ class ClanStateManager(object):
     def _onClanIdReceived(self, team, clanTag, clanId, sessionId):
         try:
             if sessionId != self._battleSessionId:
+                self._pendingRequests['{}_clan_id'.format(team)] = False
                 logger.debug('[ClanStateManager] Stale clan ID response for "%s" (session %s != %s), ignoring',
                              clanTag, sessionId, self._battleSessionId)
                 return
@@ -137,6 +138,7 @@ class ClanStateManager(object):
     def _onStrongholdInfoReceived(self, team, clanId, battleLevel, result, sessionId):
         try:
             if sessionId != self._battleSessionId:
+                self._pendingRequests['{}_info'.format(team)] = False
                 logger.debug('[ClanStateManager] Stale stronghold response for %s (session %s != %s), ignoring',
                              team, sessionId, self._battleSessionId)
                 return
