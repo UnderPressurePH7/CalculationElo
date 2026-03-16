@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import BigWorld
+import Event
 from .config_param_types import LabelParameter
 from .config_file import ConfigFile
 from .config_param import ConfigParams, g_configParams
@@ -24,6 +25,7 @@ class Config(object):
         self.configTemplate = Template(self.configParams)
         self.configFile = ConfigFile(self.configParams)
         self._loadedSuccessfully = False
+        self.onConfigChanged = Event.Event()
         
         self._loadConfigFileToParams()
         
@@ -125,7 +127,7 @@ class Config(object):
             )
             
             if settings:
-                self._applySettingsFromMsa(settings)
+                self._applySettingsFromMsa(settings, save=False)
             
             logger.debug('[Config] Mod template registered successfully')
             
@@ -134,7 +136,7 @@ class Config(object):
             logger.error('[Config] Error registering mod template: %s', e)
             logger.error('[Config] Traceback: %s', traceback.format_exc())
 
-    def _applySettingsFromMsa(self, settings):
+    def _applySettingsFromMsa(self, settings, save=True):
         try:
             configItems = self.configParams.items()
             for paramName, value in settings.items():
@@ -146,8 +148,9 @@ class Config(object):
                         logger.error('[Config] Error applying MSA setting %s = %s: %s',
                                      paramName, value, e)
             
-            self.configFile.save_config()
-            logger.debug('[Config] Applied settings from MSA')
+            if save:
+                self.configFile.save_config()
+            logger.debug('[Config] Applied settings from MSA (save=%s)', save)
             
         except Exception as e:
             logger.error('[Config] Error applying MSA settings: %s', e)
@@ -183,7 +186,10 @@ class Config(object):
             logger.error('[Config] Error updating settings from MSA: %s', e)
 
     def _notifyConfigChanged(self):
-        pass
+        try:
+            self.onConfigChanged()
+        except Exception as e:
+            logger.error('[Config] Error firing onConfigChanged: %s', e)
 
     def _loadConfigFileToParams(self):
         logger.debug('[Config] Starting config loading...')

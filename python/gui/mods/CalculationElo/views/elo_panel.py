@@ -178,6 +178,7 @@ class EloPanel(object):
         g_battleStateEvents.onScaleChanged += self._onInterfaceScaleChanged
         g_battleStateEvents.onBattleClosed += self._onBattleClosed
         g_battleStateEvents.onBattleLoaded += self._onBattleLoaded
+        g_config.onConfigChanged += self._onConfigChanged
 
         self._isInitialized = True
         logger.debug('[EloPanel] Battle started, displayMode=%s', displayMode)
@@ -198,6 +199,11 @@ class EloPanel(object):
             g_battleStateEvents.onScaleChanged -= self._onInterfaceScaleChanged
             g_battleStateEvents.onBattleClosed -= self._onBattleClosed
             g_battleStateEvents.onBattleLoaded -= self._onBattleLoaded
+        except Exception:
+            pass
+
+        try:
+            g_config.onConfigChanged -= self._onConfigChanged
         except Exception:
             pass
 
@@ -231,6 +237,11 @@ class EloPanel(object):
             g_battleStateEvents.onScaleChanged -= self._onInterfaceScaleChanged
             g_battleStateEvents.onBattleClosed -= self._onBattleClosed
             g_battleStateEvents.onBattleLoaded -= self._onBattleLoaded
+        except Exception:
+            pass
+
+        try:
+            g_config.onConfigChanged -= self._onConfigChanged
         except Exception:
             pass
 
@@ -290,6 +301,11 @@ class EloPanel(object):
         self._view = None
         self._flashReady = False
         logger.debug('[EloPanel] Flash component disposed')
+
+    def _onConfigChanged(self):
+        logger.debug('[EloPanel] Config changed, refreshing flash')
+        if self._flashReady and self._view:
+            self._pushConfigToFlash()
 
     def _pushStateToFlash(self):
         if not self._view or not self._flashReady:
