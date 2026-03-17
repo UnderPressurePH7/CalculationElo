@@ -26,6 +26,7 @@ class BattleStateEvents(object):
         self._hiddenByStatsPopup = False
         self._hiddenByKillCam = False
         self._interfaceScale = 1.0
+        self._killCamCtrl = None
 
         self.onBattleLoaded = Event.SafeEvent()
         self.onBattleClosed = Event.SafeEvent()
@@ -90,6 +91,7 @@ class BattleStateEvents(object):
     def _onGUISpaceLeft(self, spaceID):
         from skeletons.gui.app_loader import GuiGlobalSpaceID
         if spaceID == GuiGlobalSpaceID.BATTLE:
+            self._unsubscribeKillCam()
             self.onBattleClosed()
 
     def _onGUIVisibility(self, event):
@@ -118,12 +120,27 @@ class BattleStateEvents(object):
             settingsCore = dependency.instance(ISettingsCore)
             self._interfaceScale = round(settingsCore.interfaceScale.get(), 1)
 
+            self._unsubscribeKillCam()
+
             sessionProvider = dependency.instance(IBattleSessionProvider)
             killCamCtrl = getattr(sessionProvider.shared, 'killCamCtrl', None)
             if killCamCtrl:
+                self._killCamCtrl = killCamCtrl
                 killCamCtrl.onKillCamModeStateChanged += self._onKillCamStateChanged
         except Exception as e:
             logger.debug('[BattleStateEvents] _handleBattleLoad fallback: %s', e)
+
+
+    def _unsubscribeKillCam(self):
+        if not self._killCamCtrl:
+            return
+
+        try:
+            self._killCamCtrl.onKillCamModeStateChanged -= self._onKillCamStateChanged
+        except Exception:
+            pass
+
+        self._killCamCtrl = None
 
     def _onKillCamStateChanged(self, state, *args, **kwargs):
         try:

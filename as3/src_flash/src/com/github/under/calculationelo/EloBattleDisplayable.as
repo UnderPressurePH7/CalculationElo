@@ -16,6 +16,11 @@ package com.github.under.calculationelo
 
         public function initBattle():void
         {
+            if (this.battlePage == null || this.componentName == null || this.componentName.length == 0)
+            {
+                return;
+            }
+
             if (!this.battlePage.contains(this))
             {
                 this.battlePage.addChild(this);
