@@ -23,21 +23,13 @@ package com.github.under.calculationelo
         {
             super.onPopulate();
 
-            if (_activeComponent != null)
-            {
-                return;
-            }
+            if (_activeComponent != null) return;
 
             var mainViewContainer:MainViewContainer = MainViewContainer(
                 App.containerMgr.getContainer(
                     LAYER_NAMES.LAYER_ORDER.indexOf(LAYER_NAMES.VIEWS)
                 )
             );
-
-            if (mainViewContainer == null)
-            {
-                return;
-            }
 
             var view:BaseBattlePage = null;
             var idx:int = 0;
@@ -58,11 +50,7 @@ package com.github.under.calculationelo
                 _activeComponent = component;
             }
 
-            var topView:ISimpleManagedContainer = mainViewContainer.getTopmostView();
-            if (topView != null)
-            {
-                mainViewContainer.setFocusedView(topView);
-            }
+            mainViewContainer.setFocusedView(mainViewContainer.getTopmostView());
         }
 
         override protected function onDispose():void
