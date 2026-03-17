@@ -1,6 +1,6 @@
 # CalculationElo
 
-<img align="left" src="https://shields.io/badge/version-1.2.0-blue">
+<img align="left" src="https://shields.io/badge/version-1.2.1-blue">
 <br>
 
 ### Requirements:
