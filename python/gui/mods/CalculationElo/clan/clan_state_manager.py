@@ -42,6 +42,19 @@ class ClanStateManager(object):
         self._view = view
         logger.debug('[ClanStateManager] View set: %s', 'Yes' if view else 'No')
 
+    def fini(self):
+        self._battleSessionId += 1
+        self._state = self._default_state()
+        self._pendingRequests = {
+            'allies_clan_id': False,
+            'enemies_clan_id': False,
+            'allies_info': False,
+            'enemies_info': False
+        }
+        self._view = None
+        self._clanApi = None
+        self.onStateChanged.clear()
+
     def reset_state(self):
         self._battleSessionId += 1
         self._state = self._default_state()

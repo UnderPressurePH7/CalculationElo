@@ -36,6 +36,55 @@ class BattleStateEvents(object):
         self._subscribeAppLoader()
         self._subscribeEventBus()
 
+    def fini(self):
+        try:
+            ServicesLocator.appLoader.onGUISpaceEntered -= self._onGUISpaceEntered
+            ServicesLocator.appLoader.onGUISpaceLeft -= self._onGUISpaceLeft
+        except Exception:
+            pass
+
+        try:
+            ServicesLocator.settingsCore.interfaceScale.onScaleChanged -= self._onScaleFactorChanged
+        except Exception:
+            pass
+
+        try:
+            g_eventBus.removeListener(
+                GameEvent.GUI_VISIBILITY,
+                self._onGUIVisibility,
+                scope=EVENT_BUS_SCOPE.BATTLE
+            )
+        except Exception:
+            pass
+
+        try:
+            g_eventBus.removeListener(
+                GameEvent.FULL_STATS,
+                self._onToggleFullStats,
+                scope=EVENT_BUS_SCOPE.BATTLE
+            )
+        except Exception:
+            pass
+
+        for eventName in ('FULL_STATS_QUEST_PROGRESS', 'FULL_STATS_PERSONAL_RESERVES', 'EVENT_STATS'):
+            try:
+                eventType = getattr(GameEvent, eventName, None)
+                if eventType is not None:
+                    g_eventBus.removeListener(
+                        eventType,
+                        self._onToggleFullStats,
+                        scope=EVENT_BUS_SCOPE.BATTLE
+                    )
+            except (AttributeError, Exception):
+                pass
+
+        self._unsubscribeKillCam()
+
+        self.onBattleLoaded.clear()
+        self.onBattleClosed.clear()
+        self.onGUIVisibility.clear()
+        self.onScaleChanged.clear()
+
     def _subscribeAppLoader(self):
         try:
             ServicesLocator.appLoader.onGUISpaceEntered += self._onGUISpaceEntered
@@ -129,7 +178,6 @@ class BattleStateEvents(object):
                 killCamCtrl.onKillCamModeStateChanged += self._onKillCamStateChanged
         except Exception as e:
             logger.debug('[BattleStateEvents] _handleBattleLoad fallback: %s', e)
-
 
     def _unsubscribeKillCam(self):
         if not self._killCamCtrl:

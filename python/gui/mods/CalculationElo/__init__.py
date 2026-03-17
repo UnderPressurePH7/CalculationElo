@@ -4,6 +4,7 @@ from .battle_provider import BattleProvider
 from .battle_state_events import g_battleStateEvents
 from .clan import initialize_clan, finalize_clan, g_clan_state_manager
 from .views import EloPanel, _registerFlashComponents, _unregisterFlashComponents
+from .settings import g_config
 
 __all__ = [
     'initialize',
@@ -50,6 +51,8 @@ def finalize():
             g_elo_panel = None
 
         finalize_clan()
+        g_config.fini()
+        g_battleStateEvents.fini()
 
     except Exception as e:
         logger.error('[CalculationElo] Finalization failed: %s', e)

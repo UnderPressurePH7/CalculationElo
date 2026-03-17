@@ -33,7 +33,7 @@ def finalize_clan():
     global g_clan_api, g_clan_state_manager
     try:
         if g_clan_state_manager:
-            g_clan_state_manager.reset_state()
+            g_clan_state_manager.fini()
             g_clan_state_manager = None
 
         if g_clan_api:

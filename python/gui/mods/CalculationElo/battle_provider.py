@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
+import weakref
 import BigWorld
 import constants
 import BattleReplay
 from gui.battle_control import avatar_getter
 
 from .settings import g_config
-from .utils import logger, override
+from .utils import logger, override, restore_overrides
 
 
 STRONGHOLD_GUI_TYPES = (
-    constants.ARENA_GUI_TYPE.SORTIE_2,      # 15
-    constants.ARENA_GUI_TYPE.FORT_BATTLE_2,  # 16
+    constants.ARENA_GUI_TYPE.SORTIE_2,
+    constants.ARENA_GUI_TYPE.FORT_BATTLE_2,
 )
 
 
@@ -78,7 +79,6 @@ class BattleProvider(object):
 
             BattleProvider._hooked = True
             logger.debug('[BattleProvider] PlayerAvatar/BattleReplay overrides installed')
-            logger.debug('[BattleProvider] BattleReplay override installed')
 
         except Exception as e:
             logger.error('[BattleProvider] Failed to install overrides: %s', e)
@@ -110,6 +110,9 @@ class BattleProvider(object):
                 self._fallbackSubscribed = False
             except Exception as e:
                 logger.error('[BattleProvider] Error in fini: %s', e)
+
+        restore_overrides()
+        BattleProvider._hooked = False
 
         self._clanStateManager = None
         self._eloPanel = None
@@ -227,11 +230,16 @@ class BattleProvider(object):
             logger.debug('[BattleProvider] Retry %s/%s (%s), waiting...',
                          self._retryCount, self.MAX_RETRIES, reason)
 
+            ref = weakref.ref(self)
+
             def _retryCallback():
-                if self._battleSessionId != sessionId:
+                inst = ref()
+                if inst is None:
+                    return
+                if inst._battleSessionId != sessionId:
                     logger.debug('[BattleProvider] Stale retry (session changed), ignoring')
                     return
-                method = getattr(self, methodName, None)
+                method = getattr(inst, methodName, None)
                 if method:
                     method()
 

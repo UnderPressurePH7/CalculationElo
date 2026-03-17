@@ -9,7 +9,7 @@ from .translations import Translator
 from ..utils import logger
 
 try:
-    from gui.modsSettingsApi import g_modsSettingsApi   
+    from gui.modsSettingsApi import g_modsSettingsApi
 except ImportError:
     logger.error('[Config] Failed to import g_modsSettingsApi')
     g_modsSettingsApi = None
@@ -18,45 +18,50 @@ MOD_LINKAGE = 'me.under-pressure.calculationelo'
 
 
 class Config(object):
-    
+
     def __init__(self):
         logger.debug('[Config] Initializing configuration')
         self.configParams = g_configParams
         self.configTemplate = Template(self.configParams)
         self.configFile = ConfigFile(self.configParams)
         self._loadedSuccessfully = False
+        self._finalized = False
         self.onConfigChanged = Event.Event()
-        
+
         self._loadConfigFileToParams()
-        
+
         if g_modsSettingsApi:
             self._registerMod()
+
+    def fini(self):
+        self._finalized = True
+        self.onConfigChanged.clear()
 
     def _registerMod(self):
         if not g_modsSettingsApi:
             logger.debug('[Config] ModsSettingsAPI not available')
             return
-            
+
         try:
             self.configTemplate.setModDisplayName(Translator.MOD_NAME)
-            
+
             self.configTemplate.addParameterToColumn1(
-                'eloHotKey', 
+                'eloHotKey',
                 header=Translator.ELO_HOTKEY_HEADER,
                 body=Translator.ELO_HOTKEY_BODY
             )
             self.configTemplate.addParameterToColumn1(
-                'displayMode', 
+                'displayMode',
                 header=Translator.DISPLAY_MODE_HEADER,
                 body=Translator.DISPLAY_MODE_BODY
             )
             self.configTemplate.addParameterToColumn1(
-                'panelPositionX', 
+                'panelPositionX',
                 header=Translator.PANEL_POSITION_X_HEADER,
                 body=Translator.PANEL_POSITION_X_BODY
             )
             self.configTemplate.addParameterToColumn1(
-                'panelPositionY', 
+                'panelPositionY',
                 header=Translator.PANEL_POSITION_Y_HEADER,
                 body=Translator.PANEL_POSITION_Y_BODY
             )
@@ -121,16 +126,16 @@ class Config(object):
             logger.debug('[Config] Template = %s', template)
 
             settings = g_modsSettingsApi.setModTemplate(
-                MOD_LINKAGE, 
-                template, 
+                MOD_LINKAGE,
+                template,
                 self._onSettingsChanged
             )
-            
+
             if settings:
                 self._applySettingsFromMsa(settings, save=False)
-            
+
             logger.debug('[Config] Mod template registered successfully')
-            
+
         except Exception as e:
             import traceback
             logger.error('[Config] Error registering mod template: %s', e)
@@ -147,11 +152,11 @@ class Config(object):
                     except Exception as e:
                         logger.error('[Config] Error applying MSA setting %s = %s: %s',
                                      paramName, value, e)
-            
+
             if save:
                 self.configFile.save_config()
             logger.debug('[Config] Applied settings from MSA (save=%s)', save)
-            
+
         except Exception as e:
             logger.error('[Config] Error applying MSA settings: %s', e)
 
@@ -159,12 +164,15 @@ class Config(object):
         if linkage != MOD_LINKAGE:
             return
 
+        if self._finalized:
+            return
+
         if not self._loadedSuccessfully:
             logger.error('[Config] Settings change cancelled - config not loaded properly')
             self._loadConfigFileToParams()
             if not self._loadedSuccessfully:
                 return
-            
+
         try:
             logger.debug('[Config] MSA settings changed: %s', newSettings)
 
@@ -181,7 +189,7 @@ class Config(object):
             self.configFile.save_config()
             self._notifyConfigChanged()
             logger.debug('[Config] Settings updated successfully')
-            
+
         except Exception as e:
             logger.error('[Config] Error updating settings from MSA: %s', e)
 
@@ -202,11 +210,11 @@ class Config(object):
                 logger.debug('[Config] Finished config loading.')
             else:
                 logger.error('[Config] Config loading failed, using defaults')
-            
+
             if not self.configFile.exists():
                 logger.debug('[Config] Config file does not exist, creating it')
                 self.configFile.save_config()
-                
+
         except Exception as e:
             logger.error('[Config] Failed to load config: %s', e)
             configItems = self.configParams.items()
@@ -220,7 +228,7 @@ class Config(object):
                 configItems = self.configParams.items()
                 for paramName, param in configItems.items():
                     currentSettings[paramName] = param.msaValue
-                
+
                 g_modsSettingsApi.updateModSettings(MOD_LINKAGE, currentSettings)
                 logger.debug('[Config] Synchronized with MSA')
         except Exception as e:

@@ -71,6 +71,7 @@ package com.github.under.calculationelo
         private var _clickPoint:Point;
         private var _clickOffset:Point;
         private var _reusablePoint:Point;
+        private var _reusableMatrix:Matrix;
 
         private var _initialized:Boolean = false;
         private var _disposed:Boolean = false;
@@ -107,6 +108,7 @@ package com.github.under.calculationelo
             _clickPoint = new Point();
             _clickOffset = new Point();
             _reusablePoint = new Point();
+            _reusableMatrix = new Matrix();
         }
 
         override protected function onPopulate():void
@@ -161,6 +163,7 @@ package com.github.under.calculationelo
             _clickPoint = null;
             _clickOffset = null;
             _reusablePoint = null;
+            _reusableMatrix = null;
             _initialized = false;
             super.onDispose();
         }
@@ -417,14 +420,14 @@ package com.github.under.calculationelo
             if (!_background || _disposed) return;
             var g:Graphics = _background.graphics;
             g.clear();
-            var matrix:Matrix = new Matrix();
-            matrix.createGradientBox(_panelWidth, _panelHeight, Math.PI / 2, 0, 0);
+            _reusableMatrix.identity();
+            _reusableMatrix.createGradientBox(_panelWidth, _panelHeight, Math.PI / 2, 0, 0);
             g.beginGradientFill(
                 GradientType.LINEAR,
                 [BG_COLOR_TOP, BG_COLOR_BOTTOM],
                 [BG_ALPHA_TOP, BG_ALPHA_BOTTOM],
                 [0, 255],
-                matrix,
+                _reusableMatrix,
                 SpreadMethod.PAD
             );
             g.drawRoundRect(0, 0, _panelWidth, _panelHeight, BG_CORNER_RADIUS, BG_CORNER_RADIUS);
@@ -635,6 +638,15 @@ package com.github.under.calculationelo
                 _textShadow.distance = _s(1);
                 _textShadow.blurX = _s(2);
                 _textShadow.blurY = _s(2);
+                var updatedFilters:Array = [_textShadow];
+                _headerField.filters = updatedFilters;
+                _alliesNameField.filters = updatedFilters;
+                _enemiesNameField.filters = updatedFilters;
+                _alliesRatingField.filters = updatedFilters;
+                _enemiesRatingField.filters = updatedFilters;
+                _eloGainField.filters = updatedFilters;
+                _eloLossField.filters = updatedFilters;
+                _enemyStatsField.filters = updatedFilters;
             }
             _layoutFields();
             _syncPosition();

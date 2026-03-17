@@ -2,7 +2,7 @@
 import BigWorld
 from urllib import quote
 from wg_async import wg_async, AsyncReturn
-from ..utils import logger, fetch_data_with_retry, get_battle_level, ApiFallbackRequester, byteify
+from ..utils import logger, get_battle_level, ApiFallbackRequester, byteify
 
 
 DEFAULT_WG_APP_ID = '8f04db08e54ff45dbd7d4b7e7de0b76b'
@@ -14,6 +14,8 @@ WG_API_HOSTS = [
 WGSH_HOSTS = [
     'https://wgsh-woteu.wargaming.net',
 ]
+
+MAX_CACHE_SIZE = 50
 
 
 class ClanAPI(object):
@@ -58,6 +60,10 @@ class ClanAPI(object):
             logger.error('[ClanAPI] Error fetching clan ID for "%s": %s', clanTag, e)
             raise AsyncReturn(None)
 
+    def _trimCache(self, cache):
+        if len(cache) > MAX_CACHE_SIZE:
+            cache.clear()
+
     def get_clan_id(self, clanTag, callback):
         @wg_async
         def worker():
@@ -65,6 +71,7 @@ class ClanAPI(object):
                 clanId = yield self._getClanIdAsync(clanTag)
                 if clanId:
                     self._clanIdCache[clanTag] = clanId
+                    self._trimCache(self._clanIdCache)
                     BigWorld.callback(0.0, lambda: callback(clanTag, clanId))
                 elif clanTag in self._clanIdCache:
                     BigWorld.callback(0.0, lambda: callback(clanTag, self._clanIdCache[clanTag]))
@@ -130,6 +137,7 @@ class ClanAPI(object):
                     }
 
                     self._strongholdCache[cacheKey] = result
+                    self._trimCache(self._strongholdCache)
                     BigWorld.callback(0.0, lambda: callback(clanId, battleLevel, result))
 
                 elif cacheKey in self._strongholdCache:

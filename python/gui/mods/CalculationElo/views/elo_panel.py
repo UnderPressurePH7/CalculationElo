@@ -130,8 +130,9 @@ class EloPanel(object):
         self._isHotkeyPressed = False
         self._activeKeys = {}
         self._clanStateManager = None
+        self._currentDisplayMode = None
 
-        self._pendingState = None
+        self._pendingState = False
 
         self._currentState = {
             'allies_name': ' ',
@@ -161,11 +162,15 @@ class EloPanel(object):
             manager.set_view(self)
 
     def onBattleStart(self):
+        if self._isInitialized:
+            return
+
         self._flashReady = False
-        self._pendingState = None
+        self._pendingState = False
         self._calculateScaleFactor()
 
         displayMode = g_configParams.displayMode.value
+        self._currentDisplayMode = displayMode
         self._isHotkeyPressed = (displayMode == DisplayMode.ALWAYS)
 
         EloPanelInjectorView._g_eloPanel = self
@@ -194,6 +199,11 @@ class EloPanel(object):
         self.onBattleEnd()
 
     def onBattleEnd(self):
+        if not self._isInitialized:
+            return
+
+        self._isInitialized = False
+
         try:
             g_battleStateEvents.onGUIVisibility -= self._onGUIVisibilityChanged
             g_battleStateEvents.onScaleChanged -= self._onInterfaceScaleChanged
@@ -215,8 +225,8 @@ class EloPanel(object):
         self._view = None
         self._flashReady = False
         self._resetState()
-        self._isInitialized = False
-        self._pendingState = None
+        self._pendingState = False
+        self._currentDisplayMode = None
         logger.debug('[EloPanel] Battle ended')
 
     def updateFromState(self, state):
@@ -229,7 +239,7 @@ class EloPanel(object):
             if self._flashReady and self._view:
                 self._pushStateToFlash()
             else:
-                self._pendingState = self._currentState.copy()
+                self._pendingState = True
 
     def destroy(self):
         try:
@@ -252,6 +262,7 @@ class EloPanel(object):
         self._injectorView = None
         self._view = None
         self._flashReady = False
+        self._isInitialized = False
 
         if self._clanStateManager:
             try:
@@ -291,10 +302,7 @@ class EloPanel(object):
         self._view.as_setVisible(self._isHotkeyPressed)
         self._isVisible = self._isHotkeyPressed
 
-        if self._pendingState:
-            self._currentState.update(self._pendingState)
-            self._pendingState = None
-
+        self._pendingState = False
         self._pushStateToFlash()
 
     def _onFlashDisposed(self):
@@ -304,6 +312,25 @@ class EloPanel(object):
 
     def _onConfigChanged(self):
         logger.debug('[EloPanel] Config changed, refreshing flash')
+
+        newDisplayMode = g_configParams.displayMode.value
+        if self._currentDisplayMode != newDisplayMode:
+            oldDisplayMode = self._currentDisplayMode
+            self._currentDisplayMode = newDisplayMode
+
+            if oldDisplayMode == DisplayMode.ON_HOTKEY_PRESSED:
+                self._unregisterKeyHandlers()
+
+            self._activeKeys = {}
+
+            if newDisplayMode == DisplayMode.ALWAYS:
+                self._isHotkeyPressed = True
+                self._updateVisibility(g_battleStateEvents.visible)
+            elif newDisplayMode == DisplayMode.ON_HOTKEY_PRESSED:
+                self._isHotkeyPressed = False
+                self._registerKeyHandlers()
+                self._updateVisibility(False)
+
         if self._flashReady and self._view:
             self._pushConfigToFlash()
 
@@ -477,4 +504,4 @@ class EloPanel(object):
         }
         self._isHotkeyPressed = False
         self._activeKeys = {}
-        self._pendingState = None
+        self._pendingState = False
