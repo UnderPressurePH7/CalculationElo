@@ -227,6 +227,7 @@ jobs:
                     $libArgs += "-external-library-path+=$($_.FullName)"
                 }
             }
+        }
 
         
         # Find AS3 projects
