@@ -221,11 +221,13 @@ jobs:
             Write-Host "Libraries found in ${libsPath}:" -ForegroundColor Yellow
             Get-ChildItem -Path $libsPath -Filter "*.swc" -Recurse | ForEach-Object {
                 Write-Host "  - $($_.Name)"
-                $libArgs += "-library-path+=$($_.FullName)"
+                if ($_.Name -eq "playerglobal.swc") {
+                    $libArgs += "-library-path+=$($_.FullName)"
+                } else {
+                    $libArgs += "-external-library-path+=$($_.FullName)"
+                }
             }
-        } else {
-            Write-Host "No libs directory found at ${libsPath}" -ForegroundColor Yellow
-        }
+
         
         # Find AS3 projects
         $projects = Get-ChildItem -Path $srcFlash -Filter "*.as3proj" -Recurse
@@ -307,7 +309,6 @@ jobs:
                 "-output=$outputSwf",
                 "-target-player=${{ env.FLASH_PLAYER_VERSION }}",
                 "-swf-version=${{ env.SWF_VERSION }}",
-                "-static-link-runtime-shared-libraries=true",
                 "-strict=true",
                 "-optimize=true",
                 "-warnings=true",
