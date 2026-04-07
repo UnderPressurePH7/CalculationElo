@@ -7,26 +7,64 @@ from ..utils import logger, get_battle_level, ApiFallbackRequester, byteify
 
 DEFAULT_WG_APP_ID = '8f04db08e54ff45dbd7d4b7e7de0b76b'
 
-WG_API_HOSTS = [
-    'https://api.worldoftanks.eu',
-]
+REALM_CONFIG = {
+    'EU': {
+        'api_hosts': ['https://api.worldoftanks.eu'],
+        'wgsh_hosts': ['https://wgsh-woteu.wargaming.net'],
+    },
+    'NA': {
+        'api_hosts': ['https://api.worldoftanks.com'],
+        'wgsh_hosts': ['https://wgsh-wotna.wargaming.net'],
+    },
+    'ASIA': {
+        'api_hosts': ['https://api.worldoftanks.asia'],
+        'wgsh_hosts': ['https://wgsh-wotasia.wargaming.net'],
+    },
+}
 
-WGSH_HOSTS = [
-    'https://wgsh-woteu.wargaming.net',
-]
+DEFAULT_REALM = 'EU'
+
+
+def detect_realm():
+    try:
+        import constants
+        realm = getattr(constants, 'AUTH_REALM', None)
+        if realm:
+            realm = str(realm).upper()
+            if realm in REALM_CONFIG:
+                logger.debug('[ClanAPI] Detected realm: %s', realm)
+                return realm
+            logger.debug('[ClanAPI] Unknown realm "%s", falling back to %s', realm, DEFAULT_REALM)
+    except Exception as e:
+        logger.error('[ClanAPI] Realm detection failed: %s', e)
+    return DEFAULT_REALM
+
+
+WG_API_HOSTS = REALM_CONFIG[DEFAULT_REALM]['api_hosts']
+WGSH_HOSTS = REALM_CONFIG[DEFAULT_REALM]['wgsh_hosts']
 
 MAX_CACHE_SIZE = 50
 
 
 class ClanAPI(object):
 
-    def __init__(self, appId=None, apiHosts=None, wgshHosts=None):
+    def __init__(self, appId=None, apiHosts=None, wgshHosts=None, realm=None):
+        self._realm = (realm or detect_realm()).upper()
+        cfg = REALM_CONFIG.get(self._realm, REALM_CONFIG[DEFAULT_REALM])
+
         self._appId = appId or DEFAULT_WG_APP_ID
-        self._apiRequester = ApiFallbackRequester(apiHosts or WG_API_HOSTS)
-        self._wgshRequester = ApiFallbackRequester(wgshHosts or WGSH_HOSTS)
+        self._apiRequester = ApiFallbackRequester(apiHosts or cfg['api_hosts'])
+        self._wgshRequester = ApiFallbackRequester(wgshHosts or cfg['wgsh_hosts'])
+
+        logger.debug('[ClanAPI] Realm=%s api=%s wgsh=%s',
+                     self._realm, cfg['api_hosts'], cfg['wgsh_hosts'])
 
         self._clanIdCache = {}
         self._strongholdCache = {}
+
+    @property
+    def realm(self):
+        return self._realm
 
     @wg_async
     def _getClanIdAsync(self, clanTag):
