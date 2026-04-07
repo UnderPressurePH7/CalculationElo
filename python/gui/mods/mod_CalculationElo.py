@@ -2,7 +2,7 @@
 from CalculationElo.utils import logger
 from CalculationElo import initialize, finalize
 
-__version__ = '1.2.2'
+__version__ = '1.3.0'
 __author__ = 'Under_Pressure'
 __copyright__ = 'Copyright 2026, Under_Pressure'
 __mod_name__ = 'Calculation_Elo'
