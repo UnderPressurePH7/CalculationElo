@@ -13,7 +13,7 @@ from ..battle_state_events import g_battleStateEvents
 from ..settings import g_config
 from ..settings.config_param import g_configParams, DisplayMode
 from ..settings.translations import Translator
-from ..utils import logger, weak_callback, cancelCallbackSafe
+from ..utils import logger
 
 INJECTOR_LINKAGE = 'EloPanelInjector'
 COMPONENT_LINKAGE = 'EloPanelMain'
@@ -145,12 +145,8 @@ class EloPanel(object):
             'battles_count': 0
         }
 
-        self._offset = [
-            g_configParams.panelPositionX.value,
-            g_configParams.panelPositionY.value
-        ]
+        self._offset = list(g_config.configFile.panelOffset)
         self._positionChanged = False
-        self._saveCallbackId = None
 
         self._scaleFactor = 1.0
         self._screenWidth = BASE_SCREEN_WIDTH
@@ -378,9 +374,11 @@ class EloPanel(object):
 
     def _onDragEnd(self, offset):
         try:
-            self._offset = [int(offset[0]), int(offset[1])]
+            newOffset = [int(offset[0]), int(offset[1])]
+            if newOffset == self._offset:
+                return
+            self._offset = newOffset
             self._positionChanged = True
-            self._scheduleSavePosition()
             logger.debug('[EloPanel] Drag end: offset=(%s, %s)', offset[0], offset[1])
         except Exception as e:
             logger.error('[EloPanel] Error processing drag end: %s', e)
@@ -422,26 +420,11 @@ class EloPanel(object):
         if self._view and self._flashReady:
             self._view.as_setVisible(isVisible)
 
-    def _scheduleSavePosition(self):
-        cancelCallbackSafe(self._saveCallbackId)
-        self._saveCallbackId = None
-        self._saveCallbackId = BigWorld.callback(
-            2.0, weak_callback(self, '_deferredSavePosition')
-        )
-
-    def _deferredSavePosition(self):
-        self._saveCallbackId = None
-        self._savePositionIfChanged()
-
     def _savePositionIfChanged(self):
-        cancelCallbackSafe(self._saveCallbackId)
-        self._saveCallbackId = None
-
         if not self._positionChanged:
             return
 
-        g_configParams.panelPositionX.value = self._offset[0]
-        g_configParams.panelPositionY.value = self._offset[1]
+        g_config.configFile.panelOffset = list(self._offset)
         g_config.configFile.save_config()
 
         self._positionChanged = False

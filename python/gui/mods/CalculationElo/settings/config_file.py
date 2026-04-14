@@ -3,6 +3,17 @@ import json
 import os
 from ..utils import logger, byteify
 
+_DEFAULT_PANEL_OFFSET = [300, 50]
+
+
+def _toOffsetList(value, default):
+    if isinstance(value, (list, tuple)) and len(value) >= 2:
+        try:
+            return [int(value[0]), int(value[1])]
+        except (TypeError, ValueError):
+            pass
+    return list(default)
+
 
 class ConfigFile(object):
 
@@ -11,6 +22,7 @@ class ConfigFile(object):
         self.configParams = configParams
         self._loadedConfigData = None
         self._save_rev = 0
+        self.panelOffset = list(_DEFAULT_PANEL_OFFSET)
 
     def _ensureConfigExists(self):
         try:
@@ -34,10 +46,11 @@ class ConfigFile(object):
             
             for tokenName, param in configItems.items():
                 configData[tokenName] = param.defaultValue
+            configData['panel-offset'] = list(_DEFAULT_PANEL_OFFSET)
 
             with open(self.configPath, 'w') as f:
                 json.dump(configData, f, indent=4, ensure_ascii=False)
-            
+
             logger.debug('[ConfigFile] Created default config at: %s', self.configPath)
             return os.path.exists(self.configPath)
             
@@ -77,6 +90,8 @@ class ConfigFile(object):
                 else:
                     param.value = param.defaultValue
 
+            self.panelOffset = _toOffsetList(configData.get('panel-offset'), _DEFAULT_PANEL_OFFSET)
+
             logger.debug('[ConfigFile] Config loaded successfully')
             return True
                 
@@ -106,10 +121,11 @@ class ConfigFile(object):
             configItems = self.configParams.items()
             for tokenName, param in configItems.items():
                 configData[tokenName] = param.value
+            configData['panel-offset'] = list(self.panelOffset)
 
             with open(self.configPath, 'w') as f:
                 json.dump(configData, f, indent=4, ensure_ascii=False)
-            
+
             self._loadedConfigData = configData
             logger.debug('[ConfigFile] Config saved to: %s', self.configPath)
             return True

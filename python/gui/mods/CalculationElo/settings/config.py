@@ -56,16 +56,6 @@ class Config(object):
                 body=Translator.DISPLAY_MODE_BODY
             )
             self.configTemplate.addParameterToColumn1(
-                'panelPositionX',
-                header=Translator.PANEL_POSITION_X_HEADER,
-                body=Translator.PANEL_POSITION_X_BODY
-            )
-            self.configTemplate.addParameterToColumn1(
-                'panelPositionY',
-                header=Translator.PANEL_POSITION_Y_HEADER,
-                body=Translator.PANEL_POSITION_Y_BODY
-            )
-            self.configTemplate.addParameterToColumn1(
                 'showTitleVisible',
                 header=Translator.SHOW_TITLE_VISIBLE_HEADER,
                 body=Translator.SHOW_TITLE_VISIBLE_BODY

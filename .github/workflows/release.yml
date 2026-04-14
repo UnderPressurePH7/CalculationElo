@@ -14,7 +14,7 @@ on:
       version:
         description: 'Mod Version'
         required: true
-        default: '1.3.0'
+        default: '1.3.1'
       mod_id:
         description: 'Mod ID (e.g., me.author.modname)'
         required: true
@@ -30,7 +30,7 @@ on:
       game_version:
         description: 'World of Tanks version'
         required: true
-        default: '2.2.0.0'
+        default: '2.2.0.2'
 
 permissions:
   contents: write
@@ -173,7 +173,7 @@ jobs:
             $modId = "me.under_pressure.calculationelo"
             $modName = "calculationelo"
             $modDescription = "Mod for Strongholds. Displays the ELO rating of the enemy team and yours, ELO gain, as well as win rate and number of battles over the last 28 days."
-            $gameVersion = "2.2.0.0"
+            $gameVersion = "2.2.0.2"
         }
         
         echo "PROJECT_VERSION=$version" >> $env:GITHUB_ENV

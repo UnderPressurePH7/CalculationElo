@@ -5,8 +5,7 @@ from .config_param_types import (
     ColorParameter,
     RadioButtonGroupParameter,
     OptionItem,
-    HotkeyParameter,
-    SliderParameter
+    HotkeyParameter
 )
 from .translations import Translator
 
@@ -38,16 +37,6 @@ class ConfigParams(object):
                 OptionItem(DisplayMode.ON_HOTKEY_PRESSED, 1, Translator.ON_HOTKEY_PRESSED)
             ],
             defaultValue=DisplayMode.ALWAYS
-        )
-
-        self.panelPositionX = SliderParameter(
-            ['panel-position-x'],
-            int, -1920, 1, 1920, 0
-        )
-
-        self.panelPositionY = SliderParameter(
-            ['panel-position-y'],
-            int, -1080, 1, 1080, 0
         )
 
         self.headerColor = ColorParameter(
