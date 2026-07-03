@@ -14,7 +14,7 @@ except ImportError:
     logger.error('[Config] Failed to import g_modsSettingsApi')
     g_modsSettingsApi = None
 
-MOD_LINKAGE = 'me.under-pressure.calculationelo'
+MOD_LINKAGE = 'under-pressure.calculationelo'
 
 
 class Config(object):
@@ -55,17 +55,12 @@ class Config(object):
                 header=Translator.DISPLAY_MODE_HEADER,
                 body=Translator.DISPLAY_MODE_BODY
             )
-            self.configTemplate.addParameterToColumn1(
-                'showTitleVisible',
-                header=Translator.SHOW_TITLE_VISIBLE_HEADER,
-                body=Translator.SHOW_TITLE_VISIBLE_BODY
-            )
-            self.configTemplate.addParameterToColumn1(
+            self.configTemplate.addParameterToColumn2(
                 'showTeamNames',
                 header=Translator.SHOW_TEAM_NAMES_HEADER,
                 body=Translator.SHOW_TEAM_NAMES_BODY
             )
-            self.configTemplate.addParameterToColumn1(
+            self.configTemplate.addParameterToColumn2(
                 'showEloChanges',
                 header=Translator.SHOW_ELO_CHANGES_HEADER,
                 body=Translator.SHOW_ELO_CHANGES_BODY
@@ -76,41 +71,6 @@ class Config(object):
                 body=Translator.SHOW_WINRATE_AND_BATTLES_BODY
             )
 
-            self.configTemplate.addParameterToColumn2(
-                'headerColor',
-                header=Translator.HEADER_COLOR_HEADER,
-                body=Translator.HEADER_COLOR_BODY
-            )
-            self.configTemplate.addParameterToColumn2(
-                'alliesNamesColor',
-                header=Translator.ALLIES_NAMES_COLOR_HEADER,
-                body=Translator.ALLIES_NAMES_COLOR_BODY
-            )
-            self.configTemplate.addParameterToColumn2(
-                'enemiesNamesColor',
-                header=Translator.ENEMIES_NAMES_COLOR_HEADER,
-                body=Translator.ENEMIES_NAMES_COLOR_BODY
-            )
-            self.configTemplate.addParameterToColumn2(
-                'alliesRatingColor',
-                header=Translator.ALLIES_RATING_COLOR_HEADER,
-                body=Translator.ALLIES_RATING_COLOR_BODY
-            )
-            self.configTemplate.addParameterToColumn2(
-                'enemiesRatingColor',
-                header=Translator.ENEMIES_RATING_COLOR_HEADER,
-                body=Translator.ENEMIES_RATING_COLOR_BODY
-            )
-            self.configTemplate.addParameterToColumn2(
-                'eloGainColor',
-                header=Translator.ELO_GAIN_COLOR_HEADER,
-                body=Translator.ELO_GAIN_COLOR_BODY
-            )
-            self.configTemplate.addParameterToColumn2(
-                'eloLossColor',
-                header=Translator.ELO_LOSS_COLOR_HEADER,
-                body=Translator.ELO_LOSS_COLOR_BODY
-            )
 
             template = self.configTemplate.generateTemplate()
             logger.debug('[Config] Template = %s', template)

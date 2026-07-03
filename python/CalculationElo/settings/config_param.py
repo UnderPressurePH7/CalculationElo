@@ -2,7 +2,6 @@
 import Keys
 from .config_param_types import (
     CheckboxParameter,
-    ColorParameter,
     RadioButtonGroupParameter,
     OptionItem,
     HotkeyParameter
@@ -39,40 +38,6 @@ class ConfigParams(object):
             defaultValue=DisplayMode.ALWAYS
         )
 
-        self.headerColor = ColorParameter(
-            ['header-color'],
-            defaultValue=[255, 255, 255]
-        )
-
-        self.alliesNamesColor = ColorParameter(
-            ['allies-names-color'],
-            defaultValue=[79, 134, 39]
-        )
-
-        self.enemiesNamesColor = ColorParameter(
-            ['enemies-names-color'],
-            defaultValue=[154, 1, 1]
-        )
-
-        self.alliesRatingColor = ColorParameter(
-            ['allies-rating-color'],
-            defaultValue=[79, 134, 39]
-        )
-
-        self.enemiesRatingColor = ColorParameter(
-            ['enemies-rating-color'],
-            defaultValue=[154, 1, 1]
-        )
-
-        self.eloGainColor = ColorParameter(
-            ['elo-gain-color'],
-            defaultValue=[0, 255, 0]
-        )
-
-        self.eloLossColor = ColorParameter(
-            ['elo-loss-color'],
-            defaultValue=[255, 0, 0]
-        )
 
         self.showTitleVisible = CheckboxParameter(
             ['show-title-visible'],

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="CalculationEloBattle.css">
+</head>
+<body>
+    <div id="elo-root">
+        <div id="elo-title" class="elo-row elo-title"></div>
+        <div id="elo-names" class="elo-row elo-split">
+            <span id="elo-allies-name"></span>
+            <span id="elo-enemies-name"></span>
+        </div>
+        <div id="elo-ratings" class="elo-row elo-split elo-ratings">
+            <span id="elo-allies-rating"></span>
+            <span id="elo-enemies-rating"></span>
+        </div>
+        <div id="elo-changes" class="elo-row elo-split elo-small">
+            <span id="elo-gain"></span>
+            <span id="elo-loss"></span>
+        </div>
+        <div id="elo-stats" class="elo-row elo-small">
+            <span id="elo-winrate"></span><span id="elo-stats-separator"></span><span id="elo-battles"></span>
+        </div>
+    </div>
+    <script defer src="CalculationEloBattle.js"></script>
+</body>
+</html>

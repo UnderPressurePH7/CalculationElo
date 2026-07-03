@@ -1,11 +1,11 @@
 # CalculationElo
 
-<img align="left" src="https://shields.io/badge/version-1.2.2-blue">
+<img align="left" src="https://shields.io/badge/version-2.0.0-blue">
 <br>
 
 ### Requirements:
-* [`izeberg.modssettingsapi`](https://github.com/izeberg/modssettingsapi/releases/)
-* [`me.poliroid.modslistapi`](https://gitlab.com/wot-public-mods/mods-list/-/releases)
+* [`net.openwg.gameface_1.1.6.wotmod`](https://gitlab.com/openwg/wot.gameface/-/releases)
+
 
 ### Instalation:
 1. Download mod from [Releases](https://github.com/UnderPressurePH7/CalculationElo/releases).
