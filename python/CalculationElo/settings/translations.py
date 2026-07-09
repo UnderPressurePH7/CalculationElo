@@ -122,16 +122,12 @@ class TranslationManager(object):
             "panelPositionX.body": "Sets the horizontal position of the panel",
             "panelPositionY.header": "Panel Y position",
             "panelPositionY.body": "Sets the vertical position of the panel",
-            "showTitleVisible.header": "Show title",
-            "showTitleVisible.body": "Displays or hides the mod title",
             "showTeamNames.header": "Show team names",
             "showTeamNames.body": "Displays or hides team names",
             "showEloChanges.header": "Show ELO changes",
             "showEloChanges.body": "Displays or hides ELO changes after battle",
             "showWinrateAndBattles.header": "Show winrate and battles",
             "showWinrateAndBattles.body": "Displays or hides winrate and battles count",
-            "headerColor.header": "Header color",
-            "headerColor.body": "Sets the color for the header",
             "alliesNamesColor.header": "Allies names color",
             "alliesNamesColor.body": "Sets the color for allies clan names",
             "enemiesNamesColor.header": "Enemies names color",
@@ -216,16 +212,12 @@ class Translator(object):
     PANEL_POSITION_X_BODY = TranslationElement("panelPositionX.body")
     PANEL_POSITION_Y_HEADER = TranslationElement("panelPositionY.header")
     PANEL_POSITION_Y_BODY = TranslationElement("panelPositionY.body")
-    SHOW_TITLE_VISIBLE_HEADER = TranslationElement("showTitleVisible.header")
-    SHOW_TITLE_VISIBLE_BODY = TranslationElement("showTitleVisible.body")
     SHOW_TEAM_NAMES_HEADER = TranslationElement("showTeamNames.header")
     SHOW_TEAM_NAMES_BODY = TranslationElement("showTeamNames.body")
     SHOW_ELO_CHANGES_HEADER = TranslationElement("showEloChanges.header")
     SHOW_ELO_CHANGES_BODY = TranslationElement("showEloChanges.body")
     SHOW_WINRATE_AND_BATTLES_HEADER = TranslationElement("showWinrateAndBattles.header")
     SHOW_WINRATE_AND_BATTLES_BODY = TranslationElement("showWinrateAndBattles.body")
-    HEADER_COLOR_HEADER = TranslationElement("headerColor.header")
-    HEADER_COLOR_BODY = TranslationElement("headerColor.body")
     ALLIES_NAMES_COLOR_HEADER = TranslationElement("alliesNamesColor.header")
     ALLIES_NAMES_COLOR_BODY = TranslationElement("alliesNamesColor.body")
     ENEMIES_NAMES_COLOR_HEADER = TranslationElement("enemiesNamesColor.header")

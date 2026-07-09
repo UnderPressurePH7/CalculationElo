@@ -2,7 +2,6 @@
     'use strict';
 
     var root = document.getElementById('elo-root');
-    var titleEl = document.getElementById('elo-title');
     var namesEl = document.getElementById('elo-names');
     var alliesNameEl = document.getElementById('elo-allies-name');
     var enemiesNameEl = document.getElementById('elo-enemies-name');
@@ -18,38 +17,18 @@
     var statsSeparatorEl = document.getElementById('elo-stats-separator');
 
     var lastPayload = null;
-    var lastSize = null;
+    var lastReportedSize = null;
     var payload = {};
-    var debugSent = false;
 
-    function debug(message) {
+    function sendCmd(name, value) {
         try {
-            if (window.model && typeof window.model.onDebug === 'function') {
-                window.model.onDebug({ message: String(message) });
+            if (window.model && typeof window.model.onCmd === 'function') {
+                window.model.onCmd({
+                    name: String(name),
+                    value: value === undefined ? '' : String(value)
+                });
             }
         } catch (e) {}
-    }
-
-    function describeEl(name, el) {
-        var text = el.textContent;
-        var info = name + '="' + text + '" ' + el.offsetWidth + 'x' + el.offsetHeight;
-        try {
-            var cs = window.getComputedStyle(el);
-            info += ' color=' + cs.color + ' font=' + cs.fontFamily + '/' + cs.fontWeight + '/' + cs.fontSize + ' display=' + cs.display;
-        } catch (e) {
-            info += ' (no computed style)';
-        }
-        return info;
-    }
-
-    function sendDebugDump() {
-        debug(describeEl('alliesName', alliesNameEl));
-        debug(describeEl('alliesRating', alliesRatingEl));
-        debug(describeEl('gain', gainEl));
-        debug(describeEl('winrate', winrateEl));
-        debug(describeEl('separator', statsSeparatorEl));
-        debug(describeEl('battles', battlesEl));
-        debug(describeEl('root', root));
     }
 
     function toInt(value, fallback) {
@@ -60,10 +39,6 @@
     function toNumber(value, fallback) {
         var parsed = parseFloat(value);
         return isNaN(parsed) ? fallback : parsed;
-    }
-
-    function px(value) {
-        return value + 'px';
     }
 
     function color(value, fallback) {
@@ -106,28 +81,48 @@
         el.style.display = visible ? '' : 'none';
     }
 
-    function setRowHeight(el, value) {
-        el.style.height = px(value);
+    function clientSize() {
+        try {
+            if (window.viewEnv && viewEnv.getClientSizePx) {
+                var s = viewEnv.getClientSizePx();
+                if (s && s.width > 0 && s.height > 0) {
+                    return { width: s.width, height: s.height };
+                }
+            }
+        } catch (e) {}
+        return {
+            width: document.documentElement.clientWidth || window.innerWidth || 1920,
+            height: document.documentElement.clientHeight || window.innerHeight || 1080
+        };
     }
 
-    function applyLayout(scale, size) {
-        var shadowSize = Math.max(1, Math.round(scale));
-        root.style.width = px(size.w);
-        root.style.padding = px(Math.round(5 * scale));
-        root.style.borderRadius = px(Math.round(6 * scale));
-        root.style.textShadow = px(shadowSize) + ' ' + px(shadowSize) + ' ' + px(Math.max(2, Math.round(2 * scale))) + ' rgba(0, 0, 0, 0.7)';
-        titleEl.style.fontSize = px(Math.round(14 * scale));
-        namesEl.style.fontSize = px(Math.round(17 * scale));
-        ratingsEl.style.fontSize = px(Math.round(22 * scale));
-        changesEl.style.fontSize = px(Math.round(14 * scale));
-        statsEl.style.fontSize = px(Math.round(14 * scale));
-        setRowHeight(titleEl, Math.round(22 * scale));
-        setRowHeight(namesEl, Math.round(23 * scale));
-        setRowHeight(ratingsEl, Math.round(26 * scale));
-        setRowHeight(changesEl, Math.round(18 * scale));
-        setRowHeight(statsEl, Math.round(18 * scale));
-        statsSeparatorEl.style.paddingLeft = px(Math.round(4 * scale));
-        statsSeparatorEl.style.paddingRight = px(Math.round(4 * scale));
+    function remScale(payloadScale) {
+        var uiScale = toNumber(payloadScale, 1) || 1;
+        try {
+            if (window.viewEnv && viewEnv.remToPx) {
+                var px = viewEnv.remToPx(1);
+                if (px > 0) return px;
+            }
+        } catch (e) {}
+        var size = clientSize();
+        var responsive = Math.min(size.width / 1920, size.height / 1080) || 1;
+        return responsive * uiScale;
+    }
+
+    function reportSize(width, height) {
+        var w = Math.max(1, Math.round(width));
+        var h = Math.max(1, Math.round(height));
+        var key = w + 'x' + h;
+        if (key === lastReportedSize) {
+            return;
+        }
+        try {
+            if (window.viewEnv && viewEnv.resizeViewPx) {
+                viewEnv.resizeViewPx(w, h);
+                lastReportedSize = key;
+                sendCmd('onSize', key);
+            }
+        } catch (e) {}
     }
 
     function readPayload() {
@@ -147,18 +142,15 @@
         readPayload();
         var cfg = payload.config || {};
         var state = payload.state || {};
-        var size = payload.size || {};
-        var scale = Number(payload.scale) || 1;
-        var width = toInt(size.w, 140);
-        var height = toInt(size.h, 110);
-        var sizeKey = width + 'x' + height;
+        var scale = remScale(payload.scale);
 
-        root.style.display = payload.visible === false ? 'none' : 'block';
-        applyLayout(scale, { w: width, h: height });
+        document.documentElement.style.fontSize = scale + 'px';
 
-        titleEl.textContent = cfg.headerText || 'ELO Calculator';
-        titleEl.style.color = color(cfg.headerColor, 'FFFFFF');
-        setVisible(titleEl, !!cfg.showTitle);
+        if (payload.visible === false) {
+            root.classList.add('elo-hidden');
+        } else {
+            root.classList.remove('elo-hidden');
+        }
 
         setVisible(namesEl, cfg.showTeamNames !== false);
         alliesNameEl.textContent = truncateName(state.allies_name);
@@ -191,15 +183,8 @@
         winrateEl.style.color = winrateColor(winrate);
         battlesEl.style.color = battlesColor(battles);
 
-        if (sizeKey !== lastSize && window.viewEnv && viewEnv.resizeViewPx) {
-            lastSize = sizeKey;
-            viewEnv.resizeViewPx(width, height);
-        }
-
-        if (!debugSent && toInt(state.allies_rating, 0) > 0) {
-            debugSent = true;
-            window.setTimeout(sendDebugDump, 500);
-        }
+        var rect = root.getBoundingClientRect();
+        reportSize(rect.width, rect.height);
     }
 
     function poll() {
@@ -213,12 +198,17 @@
         render();
         if (window.engine) {
             window.engine.on('viewEnv.onDataChanged', render);
+            window.engine.on('self.onScaleUpdated', render);
+            window.engine.on('clientResized', render);
         }
         if (window.viewEnv && typeof viewEnv.addDataChangedCallback === 'function') {
             try {
                 viewEnv.addDataChangedCallback('model', 0, true);
             } catch (e) {}
         }
+        try {
+            window.addEventListener('resize', render);
+        } catch (e) {}
         window.setInterval(poll, 200);
         if (window.model && typeof window.model.onReady === 'function') {
             window.model.onReady({});

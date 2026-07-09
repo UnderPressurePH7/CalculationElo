@@ -5,10 +5,14 @@ import BigWorld
 import Keys
 from gui import InputHandler
 
+try:
+    from gui import g_guiResetters
+except ImportError:
+    g_guiResetters = None
+
 from ..battle_state_events import g_battleStateEvents
 from ..settings import g_config
 from ..settings.config_param import g_configParams, DisplayMode
-from ..settings.translations import Translator
 from ..utils import logger
 
 try:
@@ -28,17 +32,11 @@ except Exception:
     dependency = IGuiLoader = None
     _GF_OK = False
 
-try:
-    string_types = (basestring,)
-except NameError:
-    string_types = (str,)
-
 LAYOUT_KEY = 'mods/under_pressure/CalculationEloBattle/layoutID'
 VIEW_NAME = 'CalculationEloBattle'
 BASE_WIDTH = 140
 PAD_TOP = 5
 PAD_BOTTOM = 5
-ROW_GAP_HEADER = 22
 ROW_GAP_NAMES = 23
 ROW_GAP_RATING = 26
 ROW_GAP_SMALL = 18
@@ -47,7 +45,6 @@ DRAG_THRESHOLD = 3
 BASE_SCREEN_WIDTH = 1920
 BASE_SCREEN_HEIGHT = 1080
 FIXED_COLORS = {
-    'headerColor': 'FFFFFF',
     'alliesNamesColor': '4F8627',
     'enemiesNamesColor': '9A0101',
     'alliesRatingColor': '4F8627',
@@ -100,8 +97,6 @@ def _cursorPixels(cursor):
 def _panelSize(scaleFactor):
     scale = scaleFactor if scaleFactor and scaleFactor > 0 else 1.0
     height = int(PAD_TOP * scale)
-    if g_configParams.showTitleVisible.value:
-        height += int(ROW_GAP_HEADER * scale)
     if g_configParams.showTeamNames.value:
         height += int(ROW_GAP_NAMES * scale)
     height += int(ROW_GAP_RATING * scale)
@@ -119,13 +114,14 @@ if _GF_OK:
     class _EloPanelModel(ViewModel):
         def __init__(self, payload):
             self._payload = payload
-            super(_EloPanelModel, self).__init__(properties=1, commands=2)
+            super(_EloPanelModel, self).__init__(properties=1, commands=3)
 
         def _initialize(self):
             super(_EloPanelModel, self)._initialize()
             self._addStringProperty('payload', self._payload)
             self.onReady = self._addCommand('onReady')
             self.onDebug = self._addCommand('onDebug')
+            self.onCmd = self._addCommand('onCmd')
 
         def setPayload(self, value):
             self._setString(0, value)
@@ -140,11 +136,22 @@ if _GF_OK:
 
         def _getEvents(self):
             model = self.getViewModel()
-            return ((model.onReady, self._owner._onReady), (model.onDebug, self._onDebug))
+            return (
+                (model.onReady, self._owner._onReady),
+                (model.onDebug, self._onDebug),
+                (model.onCmd, self._onCmd),
+            )
 
         @args2params(str)
         def _onDebug(self, message):
             logger.debug('[EloPanel] JS: %s', message)
+
+        @args2params(str, str)
+        def _onCmd(self, name, value):
+            try:
+                self._owner._handleCommand(name, value)
+            except Exception:
+                logger.exception('[EloPanel] command %s failed', name)
 
         def _finalize(self):
             self._owner._setModel(None)
@@ -176,6 +183,9 @@ class EloPanel(object):
         self._lastSavedOffset = tuple(self._offset)
         self._scaleFactor = 1.0
         self._size = _panelSize(self._scaleFactor)
+        self._viewSizeReported = False
+        self._guiResetterBound = False
+        self._resizeCallbackID = None
         self._dragCallbackID = None
         self._dragging = False
         self._mouseWasDown = False
@@ -224,6 +234,7 @@ class EloPanel(object):
             pass
         self._ensureWindow()
         self._startDragTicker()
+        self._bindGuiResetter()
 
     def _onBattleClosed(self):
         self.onBattleEnd()
@@ -245,6 +256,7 @@ class EloPanel(object):
             pass
         self._unregisterKeyHandlers()
         self._stopDragTicker()
+        self._unbindGuiResetter()
         self._savePositionIfChanged()
         self._dropWindow()
         self._resetState()
@@ -271,6 +283,7 @@ class EloPanel(object):
             pass
         self._unregisterKeyHandlers()
         self._stopDragTicker()
+        self._unbindGuiResetter()
         self._savePositionIfChanged()
         self._destroyed = True
         self._dropWindow()
@@ -293,19 +306,10 @@ class EloPanel(object):
         }, ensure_ascii=False)
 
     def _buildConfigPayload(self):
-        headerText = Translator.MOD_NAME
-        if not isinstance(headerText, string_types):
-            try:
-                headerText = str(headerText)
-            except Exception:
-                headerText = 'ELO Calculator'
         return {
-            'showTitle': bool(g_configParams.showTitleVisible.value),
             'showTeamNames': bool(g_configParams.showTeamNames.value),
             'showEloChanges': bool(g_configParams.showEloChanges.value),
             'showWinrateAndBattles': bool(g_configParams.showWinrateAndBattles.value),
-            'headerText': headerText,
-            'headerColor': FIXED_COLORS['headerColor'],
             'alliesNamesColor': FIXED_COLORS['alliesNamesColor'],
             'enemiesNamesColor': FIXED_COLORS['enemiesNamesColor'],
             'alliesRatingColor': FIXED_COLORS['alliesRatingColor'],
@@ -390,12 +394,33 @@ class EloPanel(object):
             return
         self._syncSize()
         self._clampPosition()
+        scaleX, scaleY = self._windowScale()
         try:
-            self._window.move(int(self._position[0]), int(self._position[1]))
+            self._window.move(int(round(self._position[0] / scaleX)), int(round(self._position[1] / scaleY)))
         except Exception:
             pass
 
+    def _windowScale(self):
+        if self._window is None:
+            return (1.0, 1.0)
+        try:
+            nativeW, nativeH = self._window.size[:2]
+            nativeW = float(nativeW)
+            nativeH = float(nativeH)
+        except Exception:
+            return (1.0, 1.0)
+        viewW, viewH = self._size
+        if nativeW <= 10 or nativeH <= 10 or viewW <= 10 or viewH <= 10:
+            return (1.0, 1.0)
+        scaleW = float(viewW) / nativeW
+        scaleH = float(viewH) / nativeH
+        if abs(scaleW - scaleH) > 0.1 or not 0.4 <= scaleW <= 4.0:
+            return (1.0, 1.0)
+        return (scaleW, scaleH)
+
     def _syncSize(self):
+        if self._viewSizeReported:
+            return False
         size = _panelSize(self._scaleFactor)
         if size != self._size:
             self._size = size
@@ -433,6 +458,55 @@ class EloPanel(object):
         if tuple(self._position) != oldPosition:
             self._positionChanged = True
             self._move()
+
+    def _handleCommand(self, name, value):
+        if name == 'onSize':
+            try:
+                parts = str(value).split('x')
+                width = max(1, int(float(parts[0])))
+                height = max(1, int(float(parts[1])))
+            except (ValueError, IndexError):
+                return
+            self._viewSizeReported = True
+            if (width, height) != tuple(self._size):
+                self._size = (width, height)
+                self._syncPositionFromOffset()
+                self._move()
+
+    def _bindGuiResetter(self):
+        if self._guiResetterBound or g_guiResetters is None:
+            return
+        try:
+            g_guiResetters.add(self._onScreenResize)
+            self._guiResetterBound = True
+        except Exception:
+            pass
+
+    def _unbindGuiResetter(self):
+        if not self._guiResetterBound:
+            return
+        try:
+            g_guiResetters.discard(self._onScreenResize)
+        except Exception:
+            pass
+        self._guiResetterBound = False
+        _cancelCallbackSafe(self._resizeCallbackID)
+        self._resizeCallbackID = None
+
+    def _onScreenResize(self, *args):
+        if self._destroyed or self._window is None:
+            return
+        self._syncPositionFromOffset()
+        self._move()
+        _cancelCallbackSafe(self._resizeCallbackID)
+        self._resizeCallbackID = BigWorld.callback(0.2, self._resizeResync)
+
+    def _resizeResync(self):
+        self._resizeCallbackID = None
+        if self._destroyed or self._window is None:
+            return
+        self._syncPositionFromOffset()
+        self._move()
 
     def _startDragTicker(self):
         if self._dragCallbackID is None:

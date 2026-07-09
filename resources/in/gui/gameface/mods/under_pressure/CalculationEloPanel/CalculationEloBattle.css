@@ -1,3 +1,7 @@
+html {
+    font-size: 1px;
+}
+
 html,
 body {
     width: 100%;
@@ -14,20 +18,24 @@ body {
 
 #elo-root {
     display: block;
-    width: 140px;
-    min-height: 1px;
+    width: 140rem;
+    min-height: 1rem;
     overflow: hidden;
-    padding: 5px;
-    border: 1px solid rgba(68, 68, 102, 0.4);
-    border-radius: 6px;
+    padding: 5rem;
+    border: 1rem solid rgba(68, 68, 102, 0.4);
+    border-radius: 6rem;
     background: linear-gradient(180deg, rgba(26, 26, 46, 0.35), rgba(13, 13, 26, 0.35));
     color: #FFFFFF;
     font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
     font-weight: bold;
     font-variant-numeric: tabular-nums;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    text-shadow: 1rem 1rem 2rem rgba(0, 0, 0, 0.7);
     white-space: nowrap;
     user-select: none;
+}
+
+#elo-root.elo-hidden {
+    visibility: hidden;
 }
 
 .elo-row {
@@ -50,7 +58,6 @@ body {
     text-align: center;
 }
 
-.elo-title,
 #elo-stats {
     text-align: center;
 }
@@ -60,39 +67,37 @@ body {
     flex-direction: row;
     align-items: flex-start;
     justify-content: center;
+    height: 18rem;
 }
 
 #elo-stats > span {
     display: block;
 }
 
-.elo-title {
-    font-size: 14px;
-}
-
 #elo-names {
-    font-size: 17px;
+    font-size: 17rem;
+    height: 23rem;
     font-weight: bold;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.85);
+    text-shadow: 1rem 1rem 2rem rgba(0, 0, 0, 0.85);
 }
 
 .elo-ratings {
-    font-size: 22px;
+    font-size: 22rem;
+    height: 26rem;
     font-weight: bold;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+    text-shadow: 1rem 1rem 2rem rgba(0, 0, 0, 0.9);
 }
 
 .elo-small {
-    font-size: 14px;
+    font-size: 14rem;
 }
 
 #elo-changes {
     font-weight: bold;
+    height: 18rem;
 }
-
-
 
 #elo-stats-separator {
     color: #FFFFFF;
-    padding: 0 4px;
+    padding: 0 4rem;
 }

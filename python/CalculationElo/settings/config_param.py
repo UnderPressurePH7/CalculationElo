@@ -39,11 +39,6 @@ class ConfigParams(object):
         )
 
 
-        self.showTitleVisible = CheckboxParameter(
-            ['show-title-visible'],
-            defaultValue=False
-        )
-
         self.showTeamNames = CheckboxParameter(
             ['show-team-names'],
             defaultValue=True
