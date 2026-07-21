@@ -162,6 +162,9 @@ if _GF_OK:
         def __init__(self, content, parent):
             super(_EloPanelWindow, self).__init__(WindowFlags.WINDOW, content=content, layer=WindowLayer.OVERLAY, name=VIEW_NAME, parent=parent)
 
+        def _onReady(self):
+            self.show(focus=False)
+
 
 class EloPanel(object):
     def __init__(self):
