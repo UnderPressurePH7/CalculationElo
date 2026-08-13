@@ -14,7 +14,7 @@ on:
       version:
         description: 'Mod Version'
         required: true
-        default: '2.0.2'
+        default: '2.0.3'
       mod_id:
         description: 'Mod ID (e.g., me.author.modname)'
         required: true
@@ -30,7 +30,7 @@ on:
       game_version:
         description: 'World of Tanks version'
         required: true
-        default: '2.3.1.0'
+        default: '2.3.1.2'
 
 permissions:
   contents: write
