@@ -4,6 +4,14 @@ from ..utils import logger
 
 PARAM_REGISTRY = {}
 
+try:
+    _INT_TYPES = (int, long)
+except NameError:
+    _INT_TYPES = (int,)
+
+MIN_KEY_CODE = 0
+MAX_KEY_CODE = 255
+
 
 def toJson(obj):
     import json
@@ -13,7 +21,9 @@ def toJson(obj):
 def toBool(value):
     if isinstance(value, bool):
         return value
-    return str(value).lower() == "true"
+    if isinstance(value, _INT_TYPES):
+        return bool(value)
+    return str(value).strip().lower() in ("true", "1", "yes", "on")
 
 
 def toPositiveFloat(value):
@@ -397,17 +407,55 @@ class HotkeyParameter(BaseParameter):
             defaultValue = []
         super(HotkeyParameter, self).__init__(path, defaultValue, disabledValue)
 
+    @staticmethod
+    def normalizeKeys(value):
+        """Return a list of key codes, or None when the value is unusable.
+
+        The panel iterates over this value on every key event, so anything that
+        is not a plain list of integer key codes has to be rejected here rather
+        than raising once per keystroke later. A bare scalar is accepted as a
+        single-key combination; an empty list stays an empty list.
+        """
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            return None
+        if isinstance(value, _INT_TYPES):
+            value = [value]
+        if not isinstance(value, (list, tuple)):
+            return None
+
+        keys = []
+        for item in value:
+            if isinstance(item, bool) or not isinstance(item, _INT_TYPES):
+                return None
+            code = int(item)
+            if code < MIN_KEY_CODE or code > MAX_KEY_CODE:
+                return None
+            if code not in keys:
+                keys.append(code)
+        return keys
+
     def toMsaValue(self, value):
-        return value if value else []
+        return list(value) if value else []
 
     def fromMsaValue(self, msaValue):
-        return msaValue if isinstance(msaValue, list) else []
+        keys = self.normalizeKeys(msaValue)
+        if keys is None:
+            logger.error("Invalid hotkey value %s for config param %s, keeping default",
+                         msaValue, self.tokenName)
+            return list(self.defaultValue)
+        return keys
 
     def toJsonValue(self, value):
-        return value if value else []
+        return list(value) if value else []
 
     def fromJsonValue(self, jsonValue):
-        return jsonValue if isinstance(jsonValue, list) else []
+        keys = self.normalizeKeys(jsonValue)
+        if keys is None:
+            raise Exception("Invalid hotkey value {} for config param {}".format(
+                jsonValue, self.tokenName))
+        return keys
 
     def renderParam(self, header, body=None, note=None, attention=None):
         currentValue = self.toMsaValue(self.value)

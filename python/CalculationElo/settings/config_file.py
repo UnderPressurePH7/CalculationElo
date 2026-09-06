@@ -43,9 +43,9 @@ class ConfigFile(object):
         try:
             configData = {}
             configItems = self.configParams.items()
-            
+
             for tokenName, param in configItems.items():
-                configData[tokenName] = param.defaultValue
+                configData[tokenName] = param.defaultJsonValue
             configData['panel-offset'] = list(_DEFAULT_PANEL_OFFSET)
 
             with open(self.configPath, 'w') as f:
@@ -76,14 +76,17 @@ class ConfigFile(object):
                     content = f.read().strip()
 
             configData = byteify(json.loads(content))
-            self._loadedConfigData = configData 
+            if not isinstance(configData, dict):
+                raise ValueError('config root must be a JSON object, got %s'
+                                 % type(configData).__name__)
+            self._loadedConfigData = configData
             logger.debug('[ConfigFile] Loaded config data: %s', configData)
-            
+
             configItems = self.configParams.items()
             for tokenName, param in configItems.items():
                 if tokenName in configData:
                     try:
-                        param.value = configData[tokenName]
+                        param.value = param.fromJsonValue(configData[tokenName])
                     except Exception as e:
                         logger.error('[ConfigFile] Error loading parameter %s: %s', tokenName, e)
                         param.value = param.defaultValue
@@ -120,7 +123,11 @@ class ConfigFile(object):
             configData = {}
             configItems = self.configParams.items()
             for tokenName, param in configItems.items():
-                configData[tokenName] = param.value
+                try:
+                    configData[tokenName] = param.toJsonValue(param.value)
+                except Exception as e:
+                    logger.error('[ConfigFile] Error serializing parameter %s: %s', tokenName, e)
+                    configData[tokenName] = param.defaultJsonValue
             configData['panel-offset'] = list(self.panelOffset)
 
             with open(self.configPath, 'w') as f:

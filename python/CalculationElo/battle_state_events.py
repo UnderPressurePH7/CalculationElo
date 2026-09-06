@@ -21,7 +21,12 @@ class BattleStateEvents(object):
     def interfaceScale(self):
         return self._interfaceScale
 
+    @property
+    def battleLoaded(self):
+        return self._battleLoaded
+
     def __init__(self):
+        self._battleLoaded = False
         self._hiddenByInterface = False
         self._hiddenByStatsPopup = False
         self._hiddenByKillCam = False
@@ -78,6 +83,7 @@ class BattleStateEvents(object):
             except (AttributeError, Exception):
                 pass
 
+        self._battleLoaded = False
         self._unsubscribeKillCam()
 
         self.onBattleLoaded.clear()
@@ -131,6 +137,7 @@ class BattleStateEvents(object):
     def _onGUISpaceEntered(self, spaceID):
         from skeletons.gui.app_loader import GuiGlobalSpaceID
         if spaceID == GuiGlobalSpaceID.BATTLE:
+            self._battleLoaded = True
             self._hiddenByInterface = False
             self._hiddenByStatsPopup = False
             self._hiddenByKillCam = False
@@ -140,6 +147,7 @@ class BattleStateEvents(object):
     def _onGUISpaceLeft(self, spaceID):
         from skeletons.gui.app_loader import GuiGlobalSpaceID
         if spaceID == GuiGlobalSpaceID.BATTLE:
+            self._battleLoaded = False
             self._unsubscribeKillCam()
             self.onBattleClosed()
 

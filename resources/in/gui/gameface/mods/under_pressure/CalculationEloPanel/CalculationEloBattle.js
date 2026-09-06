@@ -16,9 +16,24 @@
     var winrateEl = document.getElementById('elo-winrate');
     var statsSeparatorEl = document.getElementById('elo-stats-separator');
 
+    var POLL_FAST = 200;
+    var POLL_SLOW = 1000;
+
     var lastPayload = null;
     var lastReportedSize = null;
     var payload = {};
+    var applied = {};
+    var layoutDirty = false;
+    var needsMeasure = true;
+
+    var renderPending = false;
+    var renderHandle = 0;
+    var usesRaf = typeof requestAnimationFrame === 'function';
+    var pendingSelfResize = false;
+    var lastRemScale = 0;
+
+    var dataEventSeen = false;
+    var pollIntervalId = 0;
 
     function sendCmd(name, value) {
         try {
@@ -77,8 +92,51 @@
         return Math.round(value) + '%';
     }
 
-    function setVisible(el, visible) {
+    function setText(el, key, value) {
+        if (applied[key] === value) {
+            return;
+        }
+        applied[key] = value;
+        el.textContent = value;
+        layoutDirty = true;
+    }
+
+    function setColor(el, key, value) {
+        if (applied[key] === value) {
+            return;
+        }
+        applied[key] = value;
+        el.style.color = value;
+    }
+
+    function setVisible(el, key, visible) {
+        if (applied[key] === visible) {
+            return;
+        }
+        applied[key] = visible;
         el.style.display = visible ? '' : 'none';
+        layoutDirty = true;
+    }
+
+    function setFontSize(value) {
+        if (applied.fontSize === value) {
+            return;
+        }
+        applied.fontSize = value;
+        document.documentElement.style.fontSize = value + 'px';
+        layoutDirty = true;
+    }
+
+    function setPanelHidden(hidden) {
+        if (applied.hidden === hidden) {
+            return;
+        }
+        applied.hidden = hidden;
+        if (hidden) {
+            root.classList.add('elo-hidden');
+        } else {
+            root.classList.remove('elo-hidden');
+        }
     }
 
     function clientSize() {
@@ -104,6 +162,9 @@
                 if (px > 0) return px;
             }
         } catch (e) {}
+        if (pendingSelfResize && lastRemScale > 0) {
+            return lastRemScale;
+        }
         var size = clientSize();
         var responsive = Math.min(size.width / 1920, size.height / 1080) || 1;
         return responsive * uiScale;
@@ -118,8 +179,9 @@
         }
         try {
             if (window.viewEnv && viewEnv.resizeViewPx) {
-                viewEnv.resizeViewPx(w, h);
                 lastReportedSize = key;
+                pendingSelfResize = true;
+                viewEnv.resizeViewPx(w, h);
                 sendCmd('onSize', key);
             }
         } catch (e) {}
@@ -128,7 +190,7 @@
     function readPayload() {
         var raw = window.model && window.model.payload ? String(window.model.payload) : '';
         if (raw === lastPayload) {
-            return;
+            return false;
         }
         lastPayload = raw;
         try {
@@ -136,70 +198,139 @@
         } catch (e) {
             payload = {};
         }
+        return true;
     }
 
     function render() {
-        readPayload();
         var cfg = payload.config || {};
         var state = payload.state || {};
+
+        layoutDirty = false;
+
         var scale = remScale(payload.scale);
+        lastRemScale = scale;
+        setFontSize(scale);
 
-        document.documentElement.style.fontSize = scale + 'px';
+        setPanelHidden(payload.visible === false);
 
-        if (payload.visible === false) {
-            root.classList.add('elo-hidden');
-        } else {
-            root.classList.remove('elo-hidden');
-        }
-
-        setVisible(namesEl, cfg.showTeamNames !== false);
-        alliesNameEl.textContent = truncateName(state.allies_name);
-        enemiesNameEl.textContent = truncateName(state.enemies_name);
-        alliesNameEl.style.color = color(cfg.alliesNamesColor, '4F8627');
-        enemiesNameEl.style.color = color(cfg.enemiesNamesColor, '9A0101');
+        setVisible(namesEl, 'namesRow', cfg.showTeamNames !== false);
+        setText(alliesNameEl, 'alliesName', truncateName(state.allies_name));
+        setText(enemiesNameEl, 'enemiesName', truncateName(state.enemies_name));
+        setColor(alliesNameEl, 'alliesNameColor', color(cfg.alliesNamesColor, '4F8627'));
+        setColor(enemiesNameEl, 'enemiesNameColor', color(cfg.enemiesNamesColor, '9A0101'));
 
         var alliesRating = toInt(state.allies_rating, 0);
         var enemiesRating = toInt(state.enemies_rating, 0);
-        alliesRatingEl.textContent = alliesRating > 0 ? String(alliesRating) : ' ';
-        enemiesRatingEl.textContent = enemiesRating > 0 ? String(enemiesRating) : ' ';
-        alliesRatingEl.style.color = color(cfg.alliesRatingColor, '4F8627');
-        enemiesRatingEl.style.color = color(cfg.enemiesRatingColor, '9A0101');
+        setText(alliesRatingEl, 'alliesRating', alliesRating > 0 ? String(alliesRating) : ' ');
+        setText(enemiesRatingEl, 'enemiesRating', enemiesRating > 0 ? String(enemiesRating) : ' ');
+        setColor(alliesRatingEl, 'alliesRatingColor', color(cfg.alliesRatingColor, '4F8627'));
+        setColor(enemiesRatingEl, 'enemiesRatingColor', color(cfg.enemiesRatingColor, '9A0101'));
 
-        setVisible(changesEl, cfg.showEloChanges !== false);
+        setVisible(changesEl, 'changesRow', cfg.showEloChanges !== false);
         var gain = toInt(state.elo_plus, 0);
         var loss = toInt(state.elo_minus, 0);
-        gainEl.textContent = gain > 0 ? '+' + gain : '';
-        lossEl.textContent = loss < 0 ? String(loss) : '';
-        gainEl.style.color = color(cfg.eloGainColor, '00FF00');
-        lossEl.style.color = color(cfg.eloLossColor, 'FF0000');
+        setText(gainEl, 'gain', gain > 0 ? '+' + gain : '');
+        setText(lossEl, 'loss', loss < 0 ? String(loss) : '');
+        setColor(gainEl, 'gainColor', color(cfg.eloGainColor, '00FF00'));
+        setColor(lossEl, 'lossColor', color(cfg.eloLossColor, 'FF0000'));
 
-        setVisible(statsEl, cfg.showWinrateAndBattles !== false);
+        setVisible(statsEl, 'statsRow', cfg.showWinrateAndBattles !== false);
         var battles = toInt(state.battles_count, 0);
         var winrate = toNumber(state.wins_percent, 0);
         var hasStats = battles > 0 || winrate > 0;
-        winrateEl.textContent = hasStats ? formatWinrate(winrate) : '';
-        statsSeparatorEl.textContent = hasStats ? '|' : '';
-        battlesEl.textContent = hasStats ? String(battles) : '';
-        winrateEl.style.color = winrateColor(winrate);
-        battlesEl.style.color = battlesColor(battles);
+        setText(winrateEl, 'winrate', hasStats ? formatWinrate(winrate) : '');
+        setText(statsSeparatorEl, 'separator', hasStats ? '|' : '');
+        setText(battlesEl, 'battles', hasStats ? String(battles) : '');
+        setColor(winrateEl, 'winrateColor', winrateColor(winrate));
+        setColor(battlesEl, 'battlesColor', battlesColor(battles));
 
-        var rect = root.getBoundingClientRect();
-        reportSize(rect.width, rect.height);
-    }
+        pendingSelfResize = false;
 
-    function poll() {
-        var raw = window.model && window.model.payload ? String(window.model.payload) : '';
-        if (raw !== lastPayload) {
-            render();
+        if (layoutDirty || needsMeasure) {
+            layoutDirty = false;
+            needsMeasure = false;
+            var rect = root.getBoundingClientRect();
+            reportSize(rect.width, rect.height);
         }
     }
 
+    function runRender() {
+        renderPending = false;
+        renderHandle = 0;
+        render();
+    }
+
+    function scheduleRender() {
+        if (renderPending) {
+            return;
+        }
+        renderPending = true;
+        if (usesRaf) {
+            renderHandle = requestAnimationFrame(runRender);
+        } else {
+            renderHandle = window.setTimeout(runRender, 16);
+        }
+    }
+
+    function onModelChanged() {
+        if (readPayload()) {
+            scheduleRender();
+        }
+    }
+
+    function onDataChanged() {
+        if (!dataEventSeen) {
+            dataEventSeen = true;
+            restartPoll(POLL_SLOW);
+        }
+        onModelChanged();
+    }
+
+    function onEnvChanged() {
+        needsMeasure = true;
+        scheduleRender();
+    }
+
+    function poll() {
+        onModelChanged();
+    }
+
+    function restartPoll(interval) {
+        try {
+            if (pollIntervalId) {
+                window.clearInterval(pollIntervalId);
+            }
+            pollIntervalId = window.setInterval(poll, interval);
+        } catch (e) {}
+    }
+
+    function shutdown() {
+        try {
+            if (pollIntervalId) {
+                window.clearInterval(pollIntervalId);
+                pollIntervalId = 0;
+            }
+        } catch (e) {}
+        try {
+            if (renderHandle) {
+                if (usesRaf) {
+                    cancelAnimationFrame(renderHandle);
+                } else {
+                    window.clearTimeout(renderHandle);
+                }
+                renderHandle = 0;
+                renderPending = false;
+            }
+        } catch (e) {}
+    }
+
     function initialize() {
+        readPayload();
         render();
         if (window.engine) {
-            window.engine.on('viewEnv.onDataChanged', render);
-            window.engine.on('self.onScaleUpdated', render);
-            window.engine.on('clientResized', render);
+            window.engine.on('viewEnv.onDataChanged', onDataChanged);
+            window.engine.on('self.onScaleUpdated', onEnvChanged);
+            window.engine.on('clientResized', onEnvChanged);
         }
         if (window.viewEnv && typeof viewEnv.addDataChangedCallback === 'function') {
             try {
@@ -207,9 +338,10 @@
             } catch (e) {}
         }
         try {
-            window.addEventListener('resize', render);
+            window.addEventListener('resize', onEnvChanged);
+            window.addEventListener('unload', shutdown);
         } catch (e) {}
-        window.setInterval(poll, 200);
+        restartPoll(POLL_FAST);
         if (window.model && typeof window.model.onReady === 'function') {
             window.model.onReady({});
         }

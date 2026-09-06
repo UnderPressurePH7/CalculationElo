@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import time
+
 import BigWorld
 from urllib import quote
 from wg_async import wg_async, AsyncReturn
@@ -48,6 +50,14 @@ WGSH_HOSTS = REALM_CONFIG[DEFAULT_REALM]['wgsh_hosts']
 
 MAX_CACHE_SIZE = 50
 EMPTY_STRONGHOLD_INFO = {'elo': 0, 'wins_percent': 0, 'battles_count': 0}
+CLAN_ID_CACHE_TTL = 3600.0
+
+
+def _normalize_tag(clanTag):
+    try:
+        return str(clanTag).strip().upper()
+    except Exception:
+        return ''
 
 
 def _value_or_zero(value):
@@ -141,10 +151,38 @@ class ClanAPI(object):
 
         self._clanIdCache = {}
         self._strongholdCache = {}
+        self._clanIdWaiters = {}
+        self._strongholdWaiters = {}
+
+        self._generation = 0
+        self._finalized = False
 
     @property
     def realm(self):
         return self._realm
+
+    def _isCurrent(self, generation):
+        return not self._finalized and generation == self._generation
+
+    def _deliver(self, generation, callback, args):
+        def _fire():
+            if not self._isCurrent(generation):
+                return
+            try:
+                callback(*args)
+            except Exception as e:
+                logger.error('[ClanAPI] Callback failed: %s', e)
+
+        BigWorld.callback(0.0, _fire)
+
+    def _trimCache(self, cache):
+        overflow = len(cache) - MAX_CACHE_SIZE
+        if overflow <= 0:
+            return
+        ordered = sorted(cache.items(), key=lambda item: item[1][1])
+        for key, _ in ordered[:overflow]:
+            cache.pop(key, None)
+
 
     @wg_async
     def _getClanIdAsync(self, clanTag):
@@ -178,29 +216,71 @@ class ClanAPI(object):
             logger.error('[ClanAPI] Error fetching clan ID for "%s": %s', clanTag, e)
             raise AsyncReturn(None)
 
-    def _trimCache(self, cache):
-        if len(cache) > MAX_CACHE_SIZE:
-            cache.clear()
+    def _readClanId(self, key, allowStale=False):
+        entry = self._clanIdCache.get(key)
+        if entry is None:
+            return None
+        clanId, timestamp = entry
+        if not allowStale and (time.time() - timestamp) > CLAN_ID_CACHE_TTL:
+            return None
+        return clanId
 
     def get_clan_id(self, clanTag, callback):
+        generation = self._generation
+        key = _normalize_tag(clanTag)
+
+        if self._finalized or not key:
+            self._deliver(generation, callback, (clanTag, None))
+            return
+
+        cachedId = self._readClanId(key)
+        if cachedId is not None:
+            logger.debug('[ClanAPI] Clan ID cache hit for "%s": %s', key, cachedId)
+            self._deliver(generation, callback, (clanTag, cachedId))
+            return
+
+        waiters = self._clanIdWaiters.get(key)
+        if waiters is not None:
+            logger.debug('[ClanAPI] Joined in-flight clan ID request for "%s"', key)
+            waiters.append((clanTag, callback))
+            return
+
+        self._clanIdWaiters[key] = [(clanTag, callback)]
+
         @wg_async
         def worker():
+            clanId = None
             try:
                 clanId = yield self._getClanIdAsync(clanTag)
-                if clanId:
-                    self._clanIdCache[clanTag] = clanId
-                    self._trimCache(self._clanIdCache)
-                    BigWorld.callback(0.0, lambda: callback(clanTag, clanId))
-                elif clanTag in self._clanIdCache:
-                    BigWorld.callback(0.0, lambda: callback(clanTag, self._clanIdCache[clanTag]))
-                else:
-                    BigWorld.callback(0.0, lambda: callback(clanTag, None))
             except Exception as e:
                 logger.error('[ClanAPI] Error in get_clan_id: %s', e)
-                cached = self._clanIdCache.get(clanTag)
-                BigWorld.callback(0.0, lambda: callback(clanTag, cached))
+                clanId = None
+            self._finishClanId(generation, key, clanId)
 
-        worker()
+        try:
+            worker()
+        except Exception as e:
+            logger.error('[ClanAPI] Failed to start clan ID worker: %s', e)
+            self._finishClanId(generation, key, None)
+
+    def _finishClanId(self, generation, key, clanId):
+        waiters = self._clanIdWaiters.pop(key, [])
+
+        if not self._isCurrent(generation):
+            logger.debug('[ClanAPI] Dropping stale clan ID result for "%s"', key)
+            return
+
+        if clanId:
+            self._clanIdCache[key] = (clanId, time.time())
+            self._trimCache(self._clanIdCache)
+            resolved = clanId
+        else:
+            resolved = self._readClanId(key, allowStale=True)
+            if resolved is not None:
+                logger.debug('[ClanAPI] Falling back to cached clan ID for "%s": %s', key, resolved)
+
+        for originalTag, callback in waiters:
+            self._deliver(generation, callback, (originalTag, resolved))
 
     @wg_async
     def _getStrongholdInfoAsync(self, clanId):
@@ -238,41 +318,74 @@ class ClanAPI(object):
         return _parse_wgsh_stronghold(data, battleLevel)
 
     def get_stronghold_info(self, clanId, battleLevel, callback):
-        cacheKey = '{}_{}'.format(clanId, battleLevel)
+        generation = self._generation
+
+        if self._finalized or not clanId:
+            self._deliver(generation, callback,
+                          (clanId, battleLevel, EMPTY_STRONGHOLD_INFO.copy()))
+            return
+
+        waiters = self._strongholdWaiters.get(clanId)
+        if waiters is not None:
+            logger.debug('[ClanAPI] Joined in-flight stronghold request for clan %s', clanId)
+            waiters.append((battleLevel, callback))
+            return
+
+        self._strongholdWaiters[clanId] = [(battleLevel, callback)]
 
         @wg_async
         def worker():
+            data = None
             try:
                 data = yield self._getStrongholdInfoAsync(clanId)
-                result = self._parseStrongholdInfo(data, battleLevel)
+            except Exception as e:
+                logger.error('[ClanAPI] Error in get_stronghold_info: %s', e)
+                data = None
+            self._finishStronghold(generation, clanId, data)
 
-                if result is not None:
-                    self._strongholdCache[cacheKey] = result
-                    self._trimCache(self._strongholdCache)
-                    BigWorld.callback(0.0, lambda: callback(clanId, battleLevel, result))
+        try:
+            worker()
+        except Exception as e:
+            logger.error('[ClanAPI] Failed to start stronghold worker: %s', e)
+            self._finishStronghold(generation, clanId, None)
 
-                elif cacheKey in self._strongholdCache:
-                    cached = self._strongholdCache[cacheKey]
-                    BigWorld.callback(0.0, lambda: callback(clanId, battleLevel, cached))
+    def _finishStronghold(self, generation, clanId, data):
+        waiters = self._strongholdWaiters.pop(clanId, [])
+
+        if not self._isCurrent(generation):
+            logger.debug('[ClanAPI] Dropping stale stronghold result for clan %s', clanId)
+            return
+
+        now = time.time()
+        for battleLevel, callback in waiters:
+            cacheKey = '{}_{}'.format(clanId, battleLevel)
+            result = self._parseStrongholdInfo(data, battleLevel) if data is not None else None
+
+            if result is not None:
+                self._strongholdCache[cacheKey] = (result, now)
+                self._trimCache(self._strongholdCache)
+                payload = result
+            else:
+                entry = self._strongholdCache.get(cacheKey)
+                if entry is not None:
+                    logger.debug('[ClanAPI] Falling back to cached stronghold info for %s', cacheKey)
+                    payload = entry[0]
                 else:
                     logger.error('[ClanAPI] Stronghold data has no level %s for clan %s',
                                  battleLevel, clanId)
-                    empty = EMPTY_STRONGHOLD_INFO.copy()
-                    BigWorld.callback(0.0, lambda: callback(clanId, battleLevel, empty))
+                    payload = EMPTY_STRONGHOLD_INFO
 
-            except Exception as e:
-                logger.error('[ClanAPI] Error in get_stronghold_info: %s', e)
-                cached = self._strongholdCache.get(cacheKey,
-                    EMPTY_STRONGHOLD_INFO.copy())
-                BigWorld.callback(0.0, lambda: callback(clanId, battleLevel, cached))
-
-        worker()
+            self._deliver(generation, callback, (clanId, battleLevel, dict(payload)))
 
     def clear_cache(self):
+        self._generation += 1
         self._clanIdCache.clear()
         self._strongholdCache.clear()
-        logger.debug('[ClanAPI] Cache cleared')
+        self._clanIdWaiters.clear()
+        self._strongholdWaiters.clear()
+        logger.debug('[ClanAPI] Cache cleared (generation=%s)', self._generation)
 
     def fini(self):
+        self._finalized = True
         self.clear_cache()
         logger.debug('[ClanAPI] Finalized')

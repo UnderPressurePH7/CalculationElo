@@ -13,6 +13,7 @@ except ImportError:
 from ..battle_state_events import g_battleStateEvents
 from ..settings import g_config
 from ..settings.config_param import g_configParams, DisplayMode
+from ..settings.config_param_types import HotkeyParameter
 from ..utils import logger
 
 try:
@@ -44,6 +45,9 @@ BOUNDARY_GAP = 5
 DRAG_THRESHOLD = 3
 BASE_SCREEN_WIDTH = 1920
 BASE_SCREEN_HEIGHT = 1080
+DRAG_TICK_ACTIVE = 0.0
+DRAG_TICK_IDLE = 0.05
+DRAG_TICK_HIDDEN = 0.1
 FIXED_COLORS = {
     'alliesNamesColor': '4F8627',
     'enemiesNamesColor': '9A0101',
@@ -189,7 +193,12 @@ class EloPanel(object):
         self._viewSizeReported = False
         self._guiResetterBound = False
         self._resizeCallbackID = None
+        self._recreateCallbackID = None
         self._dragCallbackID = None
+        self._dragTickerActive = False
+        self._lastPublishedPayload = None
+        self._lastMove = None
+        self._currentHotKey = ()
         self._dragging = False
         self._mouseWasDown = False
         self._dragStartCursor = None
@@ -218,6 +227,7 @@ class EloPanel(object):
         self._syncPositionFromOffset()
         displayMode = g_configParams.displayMode.value
         self._currentDisplayMode = displayMode
+        self._currentHotKey = self._readHotKey()
         self._isHotkeyPressed = (displayMode == DisplayMode.ALWAYS)
         self._isVisible = self._isHotkeyPressed and g_battleStateEvents.visible
         if displayMode == DisplayMode.ON_HOTKEY_PRESSED:
@@ -229,6 +239,16 @@ class EloPanel(object):
         g_config.onConfigChanged += self._onConfigChanged
         self._isInitialized = True
         logger.debug('[EloPanel] Battle started, displayMode=%s', displayMode)
+        if g_battleStateEvents.battleLoaded:
+            self._onBattleLoaded()
+
+    @staticmethod
+    def _readHotKey():
+        try:
+            keys = HotkeyParameter.normalizeKeys(g_configParams.eloHotKey.value)
+        except Exception:
+            keys = None
+        return tuple(keys) if keys else ()
 
     def _onBattleLoaded(self):
         try:
@@ -260,10 +280,12 @@ class EloPanel(object):
         self._unregisterKeyHandlers()
         self._stopDragTicker()
         self._unbindGuiResetter()
+        self._cancelWindowRecreate()
         self._savePositionIfChanged()
         self._dropWindow()
         self._resetState()
         self._currentDisplayMode = None
+        self._currentHotKey = ()
         logger.debug('[EloPanel] Battle ended')
 
     def updateFromState(self, state):
@@ -287,6 +309,7 @@ class EloPanel(object):
         self._unregisterKeyHandlers()
         self._stopDragTicker()
         self._unbindGuiResetter()
+        self._cancelWindowRecreate()
         self._savePositionIfChanged()
         self._destroyed = True
         self._dropWindow()
@@ -323,6 +346,8 @@ class EloPanel(object):
 
     def _setModel(self, model, publish=True):
         self._model = model
+        self._lastPublishedPayload = None
+        self._lastMove = None
         if publish:
             self.publish()
 
@@ -330,28 +355,45 @@ class EloPanel(object):
         if self._model is None:
             return
         payload = self.buildPayload()
-        try:
-            with self._model.transaction() as model:
-                model.setPayload(payload)
-        except Exception:
-            pass
+        if payload != self._lastPublishedPayload:
+            try:
+                with self._model.transaction() as model:
+                    model.setPayload(payload)
+                self._lastPublishedPayload = payload
+            except Exception:
+                self._lastPublishedPayload = None
         self._move()
 
     def _onReady(self, *args):
         self._nativeReady = True
+        self._lastPublishedPayload = None
+        self._lastMove = None
         self.publish()
-        self._move()
+        self._startDragTicker()
 
     def _onViewFinalized(self):
         self._window = None
         self._model = None
         self._nativeReady = False
         self._token += 1
+        self._lastPublishedPayload = None
+        self._lastMove = None
+        self._cancelWindowRecreate()
         if self._isInitialized and not self._destroyed:
-            BigWorld.callback(0.1, self._ensureWindow)
+            self._recreateCallbackID = BigWorld.callback(0.1, self._recreateWindow)
+
+    def _cancelWindowRecreate(self):
+        _cancelCallbackSafe(self._recreateCallbackID)
+        self._recreateCallbackID = None
+
+    def _recreateWindow(self):
+        self._recreateCallbackID = None
+        if self._destroyed or not self._isInitialized:
+            return
+        self._ensureWindow()
 
     def _ensureWindow(self):
-        if self._destroyed or self._window is not None:
+        if self._destroyed or not self._isInitialized or self._window is not None:
             return
         if not _GF_OK or gamefaceResMap is None:
             logger.error('[EloPanel] openwg_gameface is required for Gameface panel')
@@ -383,6 +425,7 @@ class EloPanel(object):
 
     def _dropWindow(self):
         self._token += 1
+        self._cancelWindowRecreate()
         if self._window is not None:
             try:
                 self._window.destroy()
@@ -391,6 +434,8 @@ class EloPanel(object):
             self._window = None
         self._model = None
         self._nativeReady = False
+        self._lastPublishedPayload = None
+        self._lastMove = None
 
     def _move(self):
         if self._window is None or not self._nativeReady:
@@ -398,10 +443,15 @@ class EloPanel(object):
         self._syncSize()
         self._clampPosition()
         scaleX, scaleY = self._windowScale()
+        target = (int(round(self._position[0] / scaleX)),
+                  int(round(self._position[1] / scaleY)))
+        if target == self._lastMove:
+            return
         try:
-            self._window.move(int(round(self._position[0] / scaleX)), int(round(self._position[1] / scaleY)))
+            self._window.move(target[0], target[1])
+            self._lastMove = target
         except Exception:
-            pass
+            self._lastMove = None
 
     def _windowScale(self):
         if self._window is None:
@@ -512,10 +562,14 @@ class EloPanel(object):
         self._move()
 
     def _startDragTicker(self):
+        if self._destroyed or not self._isInitialized:
+            return
+        self._dragTickerActive = True
         if self._dragCallbackID is None:
-            self._dragCallbackID = BigWorld.callback(0.0, self._updateDragState)
+            self._dragCallbackID = BigWorld.callback(DRAG_TICK_IDLE, self._updateDragState)
 
     def _stopDragTicker(self):
+        self._dragTickerActive = False
         _cancelCallbackSafe(self._dragCallbackID)
         self._dragCallbackID = None
         self._dragging = False
@@ -523,23 +577,36 @@ class EloPanel(object):
         self._dragStartCursor = None
         self._dragStartPosition = None
 
+    def _tickerAlive(self):
+        return self._dragTickerActive and self._isInitialized and not self._destroyed
+
     def _updateDragState(self):
         self._dragCallbackID = None
-        if self._isInitialized and self._window is not None:
-            self._handleMouseDrag()
-            self._dragCallbackID = BigWorld.callback(0.0, self._updateDragState)
+        if not self._tickerAlive():
+            return
+        interval = DRAG_TICK_HIDDEN
+        if self._window is not None:
+            interval = self._handleMouseDrag()
+        if not self._tickerAlive():
+            return
+        self._dragCallbackID = BigWorld.callback(interval, self._updateDragState)
 
     def _handleMouseDrag(self):
         if GUI is None:
-            return
-        cursor = GUI.mcursor()
+            return DRAG_TICK_HIDDEN
         mouseDown = BigWorld.isKeyDown(Keys.KEY_LEFTMOUSE)
+        if not self._isVisible:
+            if self._dragging:
+                self._finishDrag()
+            self._mouseWasDown = mouseDown
+            return DRAG_TICK_HIDDEN
+        cursor = GUI.mcursor()
         if not cursor.visible or not cursor.inWindow or not cursor.inFocus:
             if not mouseDown:
                 if self._dragging:
                     self._finishDrag()
                 self._mouseWasDown = False
-            return
+            return DRAG_TICK_ACTIVE if self._dragging else DRAG_TICK_HIDDEN
         cursorPos = _cursorPixels(cursor)
         if mouseDown and not self._mouseWasDown and self._isCursorOver(cursorPos):
             self._dragging = True
@@ -555,6 +622,7 @@ class EloPanel(object):
             if dx * dx + dy * dy >= DRAG_THRESHOLD * DRAG_THRESHOLD:
                 self._setPosition(self._dragStartPosition[0] + dx, self._dragStartPosition[1] + dy)
         self._mouseWasDown = mouseDown
+        return DRAG_TICK_ACTIVE if (self._dragging or mouseDown) else DRAG_TICK_IDLE
 
     def _finishDrag(self):
         self._dragging = False
@@ -584,6 +652,15 @@ class EloPanel(object):
                 self._isHotkeyPressed = False
                 self._registerKeyHandlers()
                 self._updateVisibility(False)
+
+        newHotKey = self._readHotKey()
+        if newHotKey != self._currentHotKey:
+            self._currentHotKey = newHotKey
+            self._activeKeys = {}
+            if self._currentDisplayMode == DisplayMode.ON_HOTKEY_PRESSED and self._isHotkeyPressed:
+                self._isHotkeyPressed = False
+                self._updateVisibility(False)
+
         oldSize = self._size
         self._syncSize()
         if self._size != oldSize:
@@ -642,7 +719,7 @@ class EloPanel(object):
             pass
 
     def _onKeyDown(self, event):
-        hotkeys = g_configParams.eloHotKey.value
+        hotkeys = self._readHotKey()
         if not hotkeys:
             return
         for key in hotkeys:
@@ -654,14 +731,14 @@ class EloPanel(object):
             self._updateVisibility(g_battleStateEvents.visible)
 
     def _onKeyUp(self, event):
-        hotkeys = g_configParams.eloHotKey.value
+        hotkeys = self._readHotKey()
         if not hotkeys:
             return
         for key in hotkeys:
             if event.key == key and self._activeKeys.get(key, False):
                 self._activeKeys[key] = False
                 break
-        if not any(self._activeKeys.get(key, False) for key in hotkeys) and self._isHotkeyPressed:
+        if self._isHotkeyPressed and not all(self._activeKeys.get(key, False) for key in hotkeys):
             self._isHotkeyPressed = False
             self._updateVisibility(False)
 

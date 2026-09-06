@@ -44,10 +44,55 @@ class BattleProvider(object):
         self._isStrongholdBattle = False
         self._battleSessionId = 0
         self._fallbackSubscribed = False
+        self._battleInitDone = False
+        self._enabled = self._readEnabled()
+        self._configSubscribed = False
 
         BattleProvider._instance = self
         self._installOverrides()
+        self._subscribeConfig()
         logger.debug('[BattleProvider] Initialized')
+
+    @staticmethod
+    def _readEnabled():
+        try:
+            return bool(g_config.configParams.enabled.value)
+        except Exception:
+            logger.error('[BattleProvider] Failed to check config')
+            return False
+
+    def _subscribeConfig(self):
+        if self._configSubscribed:
+            return
+        try:
+            g_config.onConfigChanged += self._onConfigChanged
+            self._configSubscribed = True
+        except Exception as e:
+            logger.error('[BattleProvider] Failed to subscribe to config: %s', e)
+
+    def _unsubscribeConfig(self):
+        if not self._configSubscribed:
+            return
+        try:
+            g_config.onConfigChanged -= self._onConfigChanged
+        except Exception:
+            pass
+        self._configSubscribed = False
+
+    def _onConfigChanged(self):
+        enabled = self._readEnabled()
+        if enabled == self._enabled:
+            return
+        self._enabled = enabled
+
+        if not enabled:
+            logger.debug('[BattleProvider] Disabled, tearing down active session')
+            self._teardownBattle()
+            return
+
+        logger.debug('[BattleProvider] Enabled, re-checking current battle')
+        if isBattleStronghold():
+            self._onAvatarReady()
 
     def _installOverrides(self):
         if BattleProvider._hooked:
@@ -98,6 +143,7 @@ class BattleProvider(object):
 
     def fini(self):
         self._battleSessionId += 1
+        self._unsubscribeConfig()
 
         if BattleProvider._instance is self:
             BattleProvider._instance = None
@@ -118,16 +164,14 @@ class BattleProvider(object):
         self._eloPanel = None
 
     def _onAvatarReady(self):
-        try:
-            if not g_config.configParams.enabled.value:
-                return
-        except Exception:
-            logger.error('[BattleProvider] Failed to check config')
+        self._enabled = self._readEnabled()
+        if not self._enabled:
             return
 
         try:
             self._battleSessionId += 1
             self._retryCount = 0
+            self._battleInitDone = False
             self._tryInitializeBattle()
         except Exception as e:
             logger.error('[BattleProvider] Failed to start battle session: %s', e)
@@ -172,14 +216,12 @@ class BattleProvider(object):
                 self._eloPanel.onBattleStart()
 
             self._playerTeam = player.team
-
-            playerVehicleId = player.playerVehicleID
-            if playerVehicleId and playerVehicleId in self._arena.vehicles:
-                vehicleData = self._arena.vehicles[playerVehicleId]
-                vehicleType = vehicleData.get('vehicleType')
-                self._tankTier = vehicleType.level if vehicleType else 10
-            else:
-                self._tankTier = 10
+            tankTier = self._resolveTankTier(player)
+            if tankTier is None:
+                self._scheduleRetry(sessionId, '_tryInitializeBattle',
+                                    'player vehicle tier not ready')
+                return
+            self._tankTier = tankTier
 
             logger.debug('[BattleProvider] Team=%s, Tier=%s', self._playerTeam, self._tankTier)
 
@@ -220,7 +262,34 @@ class BattleProvider(object):
             import traceback
             logger.error('[BattleProvider] Traceback: %s', traceback.format_exc())
 
+    def _resolveTankTier(self, player):
+        try:
+            playerVehicleId = getattr(player, 'playerVehicleID', None)
+            if not playerVehicleId:
+                return None
+
+            vehicles = getattr(self._arena, 'vehicles', None)
+            if not vehicles or playerVehicleId not in vehicles:
+                return None
+
+            vehicleData = vehicles[playerVehicleId]
+            vehicleType = vehicleData.get('vehicleType') if isinstance(vehicleData, dict) else None
+            level = getattr(vehicleType, 'level', None) if vehicleType is not None else None
+            if not level:
+                return None
+
+            return int(level)
+
+        except Exception as e:
+            logger.error('[BattleProvider] Error resolving tank tier: %s', e)
+            return None
+
     def _finalizeBattleInit(self, alliesName, enemiesName):
+        if self._battleInitDone:
+            logger.debug('[BattleProvider] Battle already initialized, skipping')
+            return
+        self._battleInitDone = True
+
         if self._clanStateManager:
             self._clanStateManager.initialize_battle(alliesName, enemiesName, self._tankTier)
 
@@ -249,32 +318,30 @@ class BattleProvider(object):
                          self.MAX_RETRIES, reason)
 
     def _onAvatarBecomeNonPlayer(self):
+        self._teardownBattle()
+
+    def _teardownBattle(self):
         self._battleSessionId += 1
-
-        try:
-            if not g_config.configParams.enabled.value:
-                return
-        except Exception:
-            pass
-
-        try:
-            if self._eloPanel and self._isBattleActive:
+        if self._eloPanel is not None and self._isBattleActive:
+            try:
                 self._eloPanel.onBattleEnd()
-                self._isBattleActive = False
+            except Exception as e:
+                logger.error('[BattleProvider] Failed to stop panel: %s', e)
+        self._isBattleActive = False
 
-            if self._clanStateManager:
+        if self._clanStateManager is not None:
+            try:
                 self._clanStateManager.reset_state()
+            except Exception as e:
+                logger.error('[BattleProvider] Failed to reset clan state: %s', e)
 
-        except Exception as e:
-            logger.error('[BattleProvider] Failed to stop battle session: %s', e)
-
-        finally:
-            self._arena = None
-            self._guiType = None
-            self._playerTeam = None
-            self._tankTier = None
-            self._retryCount = 0
-            self._isStrongholdBattle = False
+        self._arena = None
+        self._guiType = None
+        self._playerTeam = None
+        self._tankTier = None
+        self._retryCount = 0
+        self._isStrongholdBattle = False
+        self._battleInitDone = False
 
     def _getTeamNames(self):
         try:

@@ -117,19 +117,30 @@ def _internal_fetch(url, headers, timeout, method, postData, callback):
     )
 
 
-class ApiFallbackRequester(object):
 
+
+class ApiFallbackRequester(object):
+    VALID_RESPONSE_STATUS_MIN = 200
     INVALID_RESPONSE_STATUS_OFFSET = 400
+    TIMEOUT_STEP = 5.0
+    MAX_TIMEOUT = 30.0
 
     def __init__(self, hosts):
-        from itertools import cycle
-        self._hosts = list(hosts)
-        self._hosts_cycle = cycle(self._hosts)
-        self._current_host = next(self._hosts_cycle)
+        self._hosts = [host for host in (hosts or []) if host]
+        if not self._hosts:
+            self._hosts = ['']
+        self._host_index = 0
         self._request_id = 0
 
+    @property
+    def _current_host(self):
+        return self._hosts[self._host_index]
+
     def swap_url(self):
-        self._current_host = next(self._hosts_cycle)
+        self._host_index = (self._host_index + 1) % len(self._hosts)
+
+    def _isSuccessStatus(self, status):
+        return self.VALID_RESPONSE_STATUS_MIN <= status < self.INVALID_RESPONSE_STATUS_OFFSET
 
     def _bw_fetch(self, url, callback, headers, timeout, method, body):
         if isinstance(headers, dict):
@@ -146,28 +157,31 @@ class ApiFallbackRequester(object):
 
         self._request_id += 1
         req_id = self._request_id
-        current_host = str(self._current_host)
-        url = current_host + path
+        hostCount = len(self._hosts)
+        startIndex = self._host_index
+        lastStatus = 0
 
-        logger.debug('[Fetch #%s] attempt %s/%s  %s %s',
-                     req_id, attempt, len(self._hosts), method, url)
+        for offset in range(hostCount):
+            hostIndex = (startIndex + offset) % hostCount
+            current_host = str(self._hosts[hostIndex])
+            url = current_host + path
+            hostTimeout = min(self.MAX_TIMEOUT, timeout + self.TIMEOUT_STEP * offset)
 
-        response = yield await_callback(self._bw_fetch)(
-            url, headers=headers, timeout=timeout, method=method, body=body
-        )
+            logger.debug('[Fetch #%s] host %s/%s timeout=%s  %s %s',
+                         req_id, offset + 1, hostCount, hostTimeout, method, url)
 
-        status = getattr(response, 'responseCode', 0)
-        logger.debug('[Fetch #%s] status=%s', req_id, status)
+            response = yield await_callback(self._bw_fetch)(
+                url, headers=headers, timeout=hostTimeout, method=method, body=body
+            )
 
-        if status < self.INVALID_RESPONSE_STATUS_OFFSET:
-            raise AsyncReturn((status, getattr(response, 'body', '')))
+            lastStatus = getattr(response, 'responseCode', 0) or 0
+            logger.debug('[Fetch #%s] status=%s', req_id, lastStatus)
 
-        if attempt > len(self._hosts):
-            logger.error('[Fetch #%s] All hosts exhausted', req_id)
-            raise AsyncReturn((0, None))
+            if self._isSuccessStatus(lastStatus):
+                if hostIndex != self._host_index:
+                    self._host_index = hostIndex
+                raise AsyncReturn((lastStatus, getattr(response, 'body', '')))
 
-        if current_host == self._current_host:
-            self.swap_url()
-
-        result = yield self(path, method, headers, timeout + 5.0, body, attempt + 1)
-        raise AsyncReturn(result)
+        logger.error('[Fetch #%s] All %s host(s) failed, last status=%s',
+                     req_id, hostCount, lastStatus)
+        raise AsyncReturn((lastStatus, None))

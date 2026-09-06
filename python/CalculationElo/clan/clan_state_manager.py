@@ -4,6 +4,8 @@ import BigWorld
 from ..settings import g_config
 from ..utils import logger, calculate_elo_changes, get_battle_level
 
+EMPTY_RESULT = {'elo': 0, 'wins_percent': 0, 'battles_count': 0}
+
 
 class ClanStateManager(object):
 
@@ -109,13 +111,12 @@ class ClanStateManager(object):
             logger.error('[ClanStateManager] Error fetching clan IDs: %s', e)
 
     def _onClanIdReceived(self, team, clanTag, clanId, sessionId):
-        try:
-            if sessionId != self._battleSessionId:
-                self._pendingRequests['{}_clan_id'.format(team)] = False
-                logger.debug('[ClanStateManager] Stale clan ID response for "%s" (session %s != %s), ignoring',
-                             clanTag, sessionId, self._battleSessionId)
-                return
+        if sessionId != self._battleSessionId:
+            logger.debug('[ClanStateManager] Stale clan ID response for "%s" (session %s != %s), ignoring',
+                         clanTag, sessionId, self._battleSessionId)
+            return
 
+        try:
             logger.debug('[ClanStateManager] Clan ID for %s "%s": %s', team, clanTag, clanId)
 
             self._state['{}_clan_id'.format(team)] = clanId
@@ -149,12 +150,14 @@ class ClanStateManager(object):
             logger.error('[ClanStateManager] Error fetching stronghold info: %s', e)
 
     def _onStrongholdInfoReceived(self, team, clanId, battleLevel, result, sessionId):
+        if sessionId != self._battleSessionId:
+            logger.debug('[ClanStateManager] Stale stronghold response for %s (session %s != %s), ignoring',
+                         team, sessionId, self._battleSessionId)
+            return
+
         try:
-            if sessionId != self._battleSessionId:
-                self._pendingRequests['{}_info'.format(team)] = False
-                logger.debug('[ClanStateManager] Stale stronghold response for %s (session %s != %s), ignoring',
-                             team, sessionId, self._battleSessionId)
-                return
+            if not isinstance(result, dict):
+                result = EMPTY_RESULT
 
             rating = result.get('elo', 0)
             logger.debug('[ClanStateManager] %s rating: %s', team, rating)
