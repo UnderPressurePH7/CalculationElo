@@ -3,7 +3,7 @@ from .utils import logger
 from .battle_provider import BattleProvider
 from .battle_state_events import g_battleStateEvents
 from .clan import initialize_clan, finalize_clan, g_clan_state_manager
-from .views import EloPanel, _registerGamefaceComponents, _unregisterGamefaceComponents
+from .views import EloPanel
 from .settings import g_config
 
 __all__ = [
@@ -19,7 +19,6 @@ def initialize():
     global g_battle_provider, g_elo_panel
     try:
         initialize_clan()
-        _registerGamefaceComponents()
         from .clan import g_clan_state_manager
 
         if g_elo_panel is None:
@@ -41,7 +40,6 @@ def initialize():
 def finalize():
     global g_battle_provider, g_elo_panel
     try:
-        _unregisterGamefaceComponents()
         if g_battle_provider:
             g_battle_provider.fini()
             g_battle_provider = None

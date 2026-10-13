@@ -1,0 +1,11 @@
+[
+    {
+        "type": "Layout",
+        "id": "R.mods.under_pressure.calculationelo.views.CalculationEloBattle",
+        "path": "coui://gui/gameface/mods/under_pressure/CalculationEloPanel/CalculationEloBattle.html",
+        "parameters": {
+            "entrance": "CalculationEloBattle",
+            "impl": "gameface"
+        }
+    }
+]

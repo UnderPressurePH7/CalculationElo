@@ -1,10 +1,10 @@
 # CalculationElo
 
-<img align="left" src="https://shields.io/badge/version-2.0.4-blue">
+<img align="left" src="https://shields.io/badge/version-2.0.5-blue">
 <br>
 
 ### Requirements:
-* [`net.openwg.gameface_1.1.6.wotmod`](https://gitlab.com/openwg/wot.gameface/-/releases)
+* [`net.openwg.gameface_1.2.2.wotmod`](https://gitlab.com/openwg/wot.gameface/-/releases)
 
 
 ### Instalation:

@@ -76,7 +76,23 @@ __all__ = [
 ]
 
 logger = logging.getLogger('CalculationElo')
-logger.setLevel(logging.DEBUG if os.path.isfile('.debug_mods') else logging.ERROR)
+
+class _DebugAsInfo(logging.Filter):
+    def filter(self, record):
+        if record.levelno == logging.DEBUG:
+            record.levelno = logging.INFO
+            record.levelname = 'INFO'
+            try:
+                record.msg = '[DEBUG] ' + record.msg
+            except TypeError:
+                record.msg = '[DEBUG] %s' % (record.msg,)
+        return True
+
+
+_debugEnabled = os.path.isfile('.debug_modpackbloody')
+logger.setLevel(logging.DEBUG if _debugEnabled else logging.ERROR)
+if _debugEnabled:
+    logger.addFilter(_DebugAsInfo())
 
 
 def cancelCallbackSafe(cbid):

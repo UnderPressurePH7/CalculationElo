@@ -18,22 +18,24 @@ from ..utils import logger
 
 try:
     import GUI
-    from openwg_gameface import ModDynAccessor, manager as gamefaceResMap, on_ready as gamefaceOnReady
     from frameworks.wulf import ViewFlags, ViewModel, ViewSettings, WindowFlags, WindowLayer, WindowStatus
+    from gui.impl.gen import R
     from gui.impl.gui_decorators import args2params
     from gui.impl.pub import ViewImpl, WindowImpl
     from helpers import dependency
     from skeletons.gui.impl import IGuiLoader
+    # Declared natively in res/gui/gen_resources/me.under_pressure.calculationelo.json (WoT 2.4.1+)
+    _GF_LAYOUT = R.mods.under_pressure.calculationelo.views.CalculationEloBattle
     _GF_OK = True
 except Exception:
+    logger.exception('[EloPanel] Gameface API unavailable; UI disabled')
     GUI = None
-    ModDynAccessor = gamefaceResMap = gamefaceOnReady = None
+    _GF_LAYOUT = None
     ViewFlags = ViewModel = ViewSettings = WindowFlags = WindowLayer = WindowStatus = None
     ViewImpl = WindowImpl = args2params = None
     dependency = IGuiLoader = None
     _GF_OK = False
 
-LAYOUT_KEY = 'mods/under_pressure/CalculationEloBattle/layoutID'
 VIEW_NAME = 'CalculationEloBattle'
 BASE_WIDTH = 140
 PAD_TOP = 5
@@ -56,14 +58,6 @@ FIXED_COLORS = {
     'eloGainColor': '00FF00',
     'eloLossColor': 'FF0000'
 }
-
-
-def _registerGamefaceComponents():
-    logger.debug('[EloPanel] Gameface components use dynamic res_map registration')
-
-
-def _unregisterGamefaceComponents():
-     logger.debug('[EloPanel] Gameface res_map unregistration')
 
 
 def _cancelCallbackSafe(cbid):
@@ -113,7 +107,6 @@ def _panelSize(scaleFactor):
 
 
 if _GF_OK:
-    _GF_LAYOUT = ModDynAccessor(LAYOUT_KEY)
 
     class _EloPanelModel(ViewModel):
         def __init__(self, payload):
@@ -395,15 +388,13 @@ class EloPanel(object):
     def _ensureWindow(self):
         if self._destroyed or not self._isInitialized or self._window is not None:
             return
-        if not _GF_OK or gamefaceResMap is None:
-            logger.error('[EloPanel] openwg_gameface is required for Gameface panel')
+        if not _GF_OK:
+            return
+        if _GF_LAYOUT() < 0:
+            logger.error('[EloPanel] layout CalculationEloBattle is not registered (gen_resources missing?)')
             return
         self._token += 1
-        token = self._token
-        if gamefaceResMap.isResMapValidated:
-            self._loadWindow(token)
-        else:
-            gamefaceOnReady(lambda: self._loadWindow(token))
+        self._loadWindow(self._token)
 
     def _loadWindow(self, token, retry=0):
         if token != self._token or self._destroyed or not self._isInitialized:

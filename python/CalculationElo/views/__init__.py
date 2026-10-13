@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-from .elo_panel import EloPanel, _registerGamefaceComponents, _unregisterGamefaceComponents
+from .elo_panel import EloPanel
 
 __all__ = [
-    'EloPanel',
-    '_registerGamefaceComponents',
-    '_unregisterGamefaceComponents'
+    'EloPanel'
 ]
